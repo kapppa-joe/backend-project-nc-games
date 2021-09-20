@@ -21,3 +21,27 @@ describe("GET /api/categories", () => {
     });
   });
 });
+
+describe("GET /api/reviews/:review_id", () => {
+  test("200: should respond with an review object", async () => {
+    const review_id = 3;
+    const res = await request(app).get(`/api/reviews/${review_id}`).expect(200);
+
+    expect(res.body).toHaveProperty("review");
+    const { review } = res.body;
+
+    expect(review).toMatchObject({
+      review_id: review_id,
+      title: expect.any(String),
+      designer: expect.any(String),
+      owner: expect.any(String),
+      review_img_url: expect.any(String),
+      review_body: expect.any(String),
+      category: expect.any(String),
+      created_at: expect.any(String),
+      votes: expect.any(Number),
+    });
+
+    expect(new Date(review.created_at).toString()).not.toBe("Invalid Date");
+  });
+});
