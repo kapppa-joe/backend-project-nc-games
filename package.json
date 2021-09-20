@@ -6,7 +6,8 @@
   "scripts": {
     "setup-dbs": "psql -f ./db/setup.sql",
     "seed": "node ./db/seeds/run-seed.js",
-    "test": "jest --watch"
+    "test": "jest --watch",
+    "dev": "nodemon listen.js"
   },
   "repository": {
     "type": "git",
