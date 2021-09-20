@@ -60,7 +60,7 @@ async function setupReviewsTable(reviewData) {
       votes INTEGER DEFAULT 0,
       category VARCHAR(255) NOT NULL,
       owner VARCHAR(255) NOT NULL,
-      created_at TIMESTAMP DEFAULT now(),
+      created_at TIMESTAMPTZ DEFAULT now(),
       FOREIGN KEY (category) 
         REFERENCES categories(slug)
         ON DELETE CASCADE,
@@ -94,7 +94,7 @@ async function setupCommentsTable(commentData) {
         author VARCHAR(255) NOT NULL, 
         review_id INT NOT NULL,
         votes INT DEFAULT 0,
-        created_at TIMESTAMP DEFAULT now(),
+        created_at TIMESTAMPTZ DEFAULT now(),
         body text NOT NULL,
         FOREIGN KEY(review_id)
           REFERENCES reviews(review_id)
