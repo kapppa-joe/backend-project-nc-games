@@ -45,9 +45,15 @@ describe("GET /api/reviews/:review_id", () => {
     expect(new Date(review.created_at).toString()).not.toBe("Invalid Date");
   });
 
-  test('404: respond with msg "review_id not exists" when review is is valid but does not exist', async () => {
+  test('404: respond with msg "review_id not exists" when review_id is is valid but does not exist', async () => {
     const review_id = 99999;
     const res = await request(app).get(`/api/reviews/${review_id}`).expect(404);
     expect(res.body.msg).toBe("review_id not exists");
+  });
+
+  test('400: respond with msg "Bad request" when review_id is not valid', async () => {
+    const review_id = "1 ; DROP TABLE reviews;";
+    const res = await request(app).get(`/api/reviews/${review_id}`).expect(400);
+    expect(res.body.msg).toBe("Bad request");
   });
 });
