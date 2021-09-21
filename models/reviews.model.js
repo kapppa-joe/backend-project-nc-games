@@ -57,12 +57,16 @@ function isValidColumn(column) {
   return validColumns.includes(column);
 }
 
-exports.selectReviews = async (sort_by = "created_at") => {
-  if (!isValidColumn(sort_by)) {
+function isValidOrder(order) {
+  return ["asc", "desc"].includes(order.toLowerCase());
+}
+
+exports.selectReviews = async ({ sort_by = "created_at", order = "desc" }) => {
+  if (!isValidColumn(sort_by) || !isValidOrder(order)) {
     return Promise.reject({ status: 400, msg: "Bad request" });
   }
-  const sqlQuery = format(
-    `
+
+  const sqlQuery = `
       SELECT 
         reviews.owner
         , reviews.title
@@ -75,11 +79,8 @@ exports.selectReviews = async (sort_by = "created_at") => {
       FROM reviews LEFT OUTER JOIN comments
         ON reviews.review_id = comments.review_id
       GROUP BY reviews.review_id
-      ORDER BY %I
-    `,
-    [sort_by]
-  );
-
+      ORDER BY ${sort_by} ${order}
+    `;
   const result = await db.query(sqlQuery);
   return result.rows;
 };

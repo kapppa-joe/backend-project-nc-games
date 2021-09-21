@@ -53,7 +53,7 @@ async function setupReviewsTable(reviewData) {
     DROP TABLE IF EXISTS reviews CASCADE;
     CREATE TABLE reviews (
       review_id SERIAL PRIMARY KEY,
-      title VARCHAR(255),
+      title VARCHAR(255) COLLATE "C", -- to make psql sort like js.
       review_body text NOT NULL,
       designer VARCHAR(255),
       review_img_url VARCHAR(255) DEFAULT 'https://images.pexels.com/photos/163064/play-stone-network-networked-interactive-163064.jpeg',

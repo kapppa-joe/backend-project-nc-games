@@ -5,6 +5,8 @@ const app = require("../app");
 const testData = require("../db/data/test-data/index.js");
 const { seed } = require("../db/seeds/seed.js");
 
+const { makeCombinations } = require("../utils/");
+
 beforeEach(() => seed(testData));
 afterAll(() => db.end());
 
@@ -145,12 +147,86 @@ describe("GET /api/reviews", () => {
     });
   });
 
-  test("200: reviews should be sorted by create_at date by default", async () => {
+  test("200: reviews should be sorted by create_at date in desc order by default", async () => {
     const res = await request(app).get("/api/reviews").expect(200);
 
     const { reviews } = res.body;
     expect(reviews).toBeSorted({
       key: "created_at",
+      descending: true,
     });
+  });
+
+  test("200: accept a sort_by query and respond with sorted results", async () => {
+    const keysToTest = [
+      "owner",
+      "title",
+      "review_id",
+      "category",
+      "review_img_url",
+      "created_at",
+      "votes",
+      "comment_count",
+    ];
+
+    for (const sortByKey of keysToTest) {
+      const res = await request(app)
+        .get(`/api/reviews?sort_by=${sortByKey}`)
+        .expect(200);
+      expect(res.body.reviews).toBeSorted({ key: sortByKey, descending: true });
+    }
+  });
+
+  test("400: respond with 'Bad request' when sort_by key is invalid", async () => {
+    const res = await request(app)
+      .get("/api/reviews?sort_by=an_invalid_key")
+      .expect(400);
+    expect(res.body.msg).toBe("Bad request");
+
+    const res2 = await request(app)
+      .get(
+        "/api/reviews?sort_by=title;DROP TABLE comments; DROP TABLE reviews;"
+      )
+      .expect(400);
+    expect(res2.body.msg).toBe("Bad request");
+  });
+
+  test("200: accept a 'order' query which can be 'asc' or 'desc' for ascending or descending", async () => {
+    const choicesForSortBy = [
+      "owner",
+      "title",
+      "review_id",
+      "category",
+      "review_img_url",
+      "created_at",
+      "votes",
+      "comment_count",
+    ];
+    const choicesForOrder = ["desc", "asc"];
+    const combinationsToTest = makeCombinations(
+      choicesForSortBy,
+      choicesForOrder
+    );
+
+    for (const [sort_by, order] of combinationsToTest) {
+      const result = await request(app)
+        .get(`/api/reviews?sort_by=${sort_by}&order=${order}`)
+        .expect(200);
+      expect(result.body.reviews.length).toBeGreaterThan(0);
+      expect(result.body.reviews).toBeSorted({
+        key: sort_by,
+        descending: order === "desc",
+      });
+    }
+  });
+
+  test("400: respond with 'Bad request' when `order` query is invalid", async () => {
+    const res = await request(app).get("/api/reviews?order=apple").expect(400);
+    expect(res.body.msg).toBe("Bad request");
+
+    const res2 = await request(app)
+      .get("/api/reviews?order=asc;DROP TABLE reviews;")
+      .expect(400);
+    expect(res2.body.msg).toBe("Bad request");
   });
 });
