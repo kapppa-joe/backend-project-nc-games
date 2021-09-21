@@ -4,7 +4,7 @@ exports.fetchReviewById = async (review_id) => {
   const sqlQuery = {
     text: `
         SELECT reviews.*, COUNT(comment_id) :: INT as comment_count 
-          FROM reviews INNER JOIN comments
+          FROM reviews LEFT OUTER JOIN comments
           ON reviews.review_id = comments.review_id
         WHERE reviews.review_id = $1
         GROUP BY reviews.review_id;
@@ -40,4 +40,26 @@ exports.updateReviewById = async (review_id, inc_votes) => {
 
   const result = await db.query(sqlQuery);
   return result.rows[0];
+};
+
+exports.selectReviews = async () => {
+  const sqlQuery = {
+    text: `
+      SELECT 
+        reviews.owner
+        , reviews.title
+        , reviews.review_id
+        , reviews.category
+        , reviews.review_img_url
+        , reviews.created_at
+        , reviews.votes
+        , COUNT(comment_id) :: INT as comment_count
+      FROM reviews LEFT OUTER JOIN comments
+        ON reviews.review_id = comments.review_id
+      GROUP BY reviews.review_id
+    `,
+  };
+
+  const result = await db.query(sqlQuery);
+  return result.rows;
 };

@@ -24,26 +24,29 @@ describe("GET /api/categories", () => {
 
 describe("GET /api/reviews/:review_id", () => {
   test("200: should respond with an review object", async () => {
-    const review_id = 3;
-    const res = await request(app).get(`/api/reviews/${review_id}`).expect(200);
+    for (let review_id = 1; review_id <= 13; review_id++) {
+      const res = await request(app)
+        .get(`/api/reviews/${review_id}`)
+        .expect(200);
 
-    expect(res.body).toHaveProperty("review");
-    const { review } = res.body;
+      expect(res.body).toHaveProperty("review");
+      const { review } = res.body;
 
-    expect(review).toMatchObject({
-      owner: expect.any(String),
-      title: expect.any(String),
-      review_id: review_id,
-      review_body: expect.any(String),
-      designer: expect.any(String),
-      review_img_url: expect.any(String),
-      category: expect.any(String),
-      created_at: expect.any(String),
-      votes: expect.any(Number),
-      comment_count: expect.any(Number),
-    });
+      expect(review).toMatchObject({
+        owner: expect.any(String),
+        title: expect.any(String),
+        review_id: review_id,
+        review_body: expect.any(String),
+        designer: expect.any(String),
+        review_img_url: expect.any(String),
+        category: expect.any(String),
+        created_at: expect.any(String),
+        votes: expect.any(Number),
+        comment_count: expect.any(Number),
+      });
 
-    expect(new Date(review.created_at).toString()).not.toBe("Invalid Date");
+      expect(new Date(review.created_at).toString()).not.toBe("Invalid Date");
+    }
   });
 
   test('404: respond with msg "review_id not exists" when review_id is is valid but does not exist', async () => {
@@ -117,5 +120,27 @@ describe("PATCH /api/reviews/:review_id", () => {
       .send({ inc_votes: 3 })
       .expect(404);
     expect(res.body.msg).toBe("review_id not exists");
+  });
+});
+
+describe("GET /api/reviews", () => {
+  test("200: respond with an array of review objects", async () => {
+    const res = await request(app).get("/api/reviews").expect(200);
+
+    expect(res.body).toHaveProperty("reviews");
+    expect(res.body.reviews).toHaveLength(13);
+
+    res.body.reviews.forEach((review) => {
+      expect(review).toMatchObject({
+        owner: expect.any(String),
+        title: expect.any(String),
+        review_id: expect.any(Number),
+        category: expect.any(String),
+        review_img_url: expect.any(String),
+        created_at: expect.any(String),
+        votes: expect.any(Number),
+        comment_count: expect.any(Number),
+      });
+    });
   });
 });
