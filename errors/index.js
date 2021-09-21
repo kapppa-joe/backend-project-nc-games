@@ -1,5 +1,5 @@
 const handlePsql400Error = (err, req, res, next) => {
-  const errorCodesToHandle = ["22P02"];
+  const errorCodesToHandle = ["22P02", "23502", "23503"];
   if (errorCodesToHandle.includes(err.code)) {
     res.status(400).send({ msg: "Bad request" });
   } else {

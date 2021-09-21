@@ -106,6 +106,11 @@ describe("PATCH /api/reviews/:review_id", () => {
     expect(res.body.msg).toBe("Bad request");
   });
 
+  test("400: respond with 'Bad request' if inc_votes is not provided", async () => {
+    const res = await request(app).patch("/api/reviews/2").send({}).expect(400);
+    expect(res.body.msg).toBe("Bad request");
+  });
+
   test("400: respond with 'Bad request' if review_id is invalid", async () => {
     const res = await request(app)
       .patch("/api/reviews/some_invalid_id")
@@ -235,7 +240,7 @@ describe("GET /api/reviews", () => {
     });
   });
 
-  describe("`category` query", () => {
+  describe("category query", () => {
     test("200: respond with reviews filtered by `category` given", async () => {
       const testCategory = "social deduction";
       const res = await request(app)
@@ -355,5 +360,97 @@ describe("GET /api/reviews/:review_id/comments", () => {
       .get("/api/reviews/99999/comments")
       .expect(404);
     expect(res.body.msg).toBe("review_id not exists");
+  });
+});
+
+describe("POST /api/reviews/:review_id/comments", () => {
+  test("201: respond with new comment", async () => {
+    const testId = 2;
+    const testComment = {
+      username: "mallionaire",
+      body: "a new comment",
+    };
+
+    // record the start time for later use
+    const startTime = new Date();
+
+    const res = await request(app)
+      .post(`/api/reviews/${testId}/comments`)
+      .send(testComment)
+      .expect(201);
+
+    expect(res.body.comment).toMatchObject({
+      comment_id: 7, // test seed data have 6 comments.
+      author: testComment.username,
+      body: testComment.body,
+      created_at: expect.any(String),
+      votes: 0,
+      review_id: testId,
+    });
+
+    const newCommentTimeStamp = new Date(res.body.comment.created_at);
+    // check created_at is a valid time
+    expect(newCommentTimeStamp.toString()).not.toBe("Invalid Date");
+
+    // check created_at is correct time i.e. time of posting the new comment.
+    const timeNow = new Date();
+    expect(newCommentTimeStamp - startTime).toBeGreaterThan(0);
+    expect(newCommentTimeStamp - timeNow).toBeLessThan(0);
+
+    // verify db get the new comment
+    const result = await db.query(
+      `SELECT * FROM comments WHERE body = '${testComment.body}';`
+    );
+    expect(result.rows).toHaveLength(1);
+  });
+
+  test("400: respond with 'Bad request' when username / body / both are not given", async () => {
+    const res = await request(app)
+      .post("/api/reviews/2/comments")
+      .send({ username: "dav3rid" })
+      .expect(400);
+
+    expect(res.body.msg).toBe("Bad request");
+
+    const res2 = await request(app)
+      .post("/api/reviews/2/comments")
+      .send({ body: "Lorem ipsum dolor sit amet, consectetur adipiscing elit" })
+      .expect(400);
+
+    expect(res2.body.msg).toBe("Bad request");
+
+    const res3 = await request(app)
+      .post("/api/reviews/2/comments")
+      .send({})
+      .expect(400);
+
+    expect(res3.body.msg).toBe("Bad request");
+  });
+
+  test("400: respond with 'Bad request' when username does not exist in database record", async () => {
+    const res = await request(app)
+      .post("/api/reviews/3/comments")
+      .send({ username: "no_such_user", body: "A new comment :D" })
+      .expect(400);
+
+    expect(res.body.msg).toBe("Bad request");
+  });
+
+  test("400: respond with 'Bad request' when review_id is not valid", async () => {
+    const res = await request(app)
+      .post("/api/reviews/wanna_have_a_jaffa_cake/comments")
+      .send({ username: "dav3rid", body: "A new comment" })
+      .expect(400);
+
+    expect(res.body.msg).toBe("Bad request");
+  });
+
+  test("400: respond with 'Bad request' when review_id is valid but does not exist", async () => {
+    const res = await request(app)
+      .post("/api/reviews/99999/comments")
+      .send({ username: "dav3rid", body: "A new comment :D" })
+      .expect(400);
+
+    expect(res.body.msg).toBe("Bad request");
   });
 });
