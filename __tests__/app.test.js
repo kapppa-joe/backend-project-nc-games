@@ -141,6 +141,16 @@ describe("GET /api/reviews", () => {
         votes: expect.any(Number),
         comment_count: expect.any(Number),
       });
+      expect(new Date(review.created_at).toString()).not.toBe("Invalid Date");
+    });
+  });
+
+  test("200: reviews should be sorted by create_at date by default", async () => {
+    const res = await request(app).get("/api/reviews").expect(200);
+
+    const { reviews } = res.body;
+    expect(reviews).toBeSorted({
+      key: "created_at",
     });
   });
 });

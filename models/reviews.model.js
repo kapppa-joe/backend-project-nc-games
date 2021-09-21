@@ -1,4 +1,5 @@
 const db = require("../db");
+const format = require("pg-format");
 
 exports.fetchReviewById = async (review_id) => {
   const sqlQuery = {
@@ -42,9 +43,26 @@ exports.updateReviewById = async (review_id, inc_votes) => {
   return result.rows[0];
 };
 
-exports.selectReviews = async () => {
-  const sqlQuery = {
-    text: `
+function isValidColumn(column) {
+  const validColumns = [
+    "owner",
+    "title",
+    "review_id",
+    "category",
+    "review_img_url",
+    "created_at",
+    "votes",
+    "comment_count",
+  ];
+  return validColumns.includes(column);
+}
+
+exports.selectReviews = async (sort_by = "created_at") => {
+  if (!isValidColumn(sort_by)) {
+    return Promise.reject({ status: 400, msg: "Bad request" });
+  }
+  const sqlQuery = format(
+    `
       SELECT 
         reviews.owner
         , reviews.title
@@ -57,8 +75,10 @@ exports.selectReviews = async () => {
       FROM reviews LEFT OUTER JOIN comments
         ON reviews.review_id = comments.review_id
       GROUP BY reviews.review_id
+      ORDER BY %I
     `,
-  };
+    [sort_by]
+  );
 
   const result = await db.query(sqlQuery);
   return result.rows;
