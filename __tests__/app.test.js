@@ -58,3 +58,64 @@ describe("GET /api/reviews/:review_id", () => {
     expect(res.body.msg).toBe("Bad request");
   });
 });
+
+describe("PATCH /api/reviews/:review_id", () => {
+  test("200: accept object with inc_votes property and respond with patched review object", async () => {
+    const review_id = 2;
+    const votesBeforePatch = 5;
+    const inc_votes = 3;
+
+    const res = await request(app)
+      .patch(`/api/reviews/${review_id}`)
+      .send({ inc_votes })
+      .expect(200);
+    expect(res.body).toHaveProperty("review");
+
+    expect(res.body.review).toMatchObject({
+      review_id: review_id,
+      votes: votesBeforePatch + inc_votes,
+    });
+
+    // verify that votes in db is updated
+    const queryResult = await db.query(
+      `SELECT votes FROM reviews WHERE review_id = 2`
+    );
+    expect((queryResult.rows[0].votes = votesBeforePatch + inc_votes));
+  });
+
+  test("200: passing a negative inc_votes can decrease votes", async () => {
+    const review_id = 2;
+    const votesBeforePatch = 5;
+    const inc_votes = -10;
+
+    const res = await request(app)
+      .patch(`/api/reviews/${review_id}`)
+      .send({ inc_votes })
+      .expect(200);
+    expect(res.body.review.votes).toBe(votesBeforePatch + inc_votes);
+  });
+
+  test("400: respond with 'Bad request' if value of inc_vote is invalid", async () => {
+    const res = await request(app)
+      .patch("/api/reviews/2")
+      .send({ inc_votes: "some_invalid_things" })
+      .expect(400);
+    expect(res.body.msg).toBe("Bad request");
+  });
+
+  test("400: respond with 'Bad request' if review_id is invalid", async () => {
+    const res = await request(app)
+      .patch("/api/reviews/some_invalid_id")
+      .send({ inc_votes: 3 })
+      .expect(400);
+    expect(res.body.msg).toBe("Bad request");
+  });
+
+  test("404: respond with 'review_id not exists' if review_id does not exists", async () => {
+    const res = await request(app)
+      .patch("/api/reviews/9999")
+      .send({ inc_votes: 3 })
+      .expect(404);
+    expect(res.body.msg).toBe("review_id not exists");
+  });
+});
