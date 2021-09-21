@@ -157,76 +157,160 @@ describe("GET /api/reviews", () => {
     });
   });
 
-  test("200: accept a sort_by query and respond with sorted results", async () => {
-    const keysToTest = [
-      "owner",
-      "title",
-      "review_id",
-      "category",
-      "review_img_url",
-      "created_at",
-      "votes",
-      "comment_count",
-    ];
+  describe("sort_by query", () => {
+    test("200: accept a sort_by query and respond with sorted results", async () => {
+      const keysToTest = [
+        "owner",
+        "title",
+        "review_id",
+        "category",
+        "review_img_url",
+        "created_at",
+        "votes",
+        "comment_count",
+      ];
 
-    for (const sortByKey of keysToTest) {
+      for (const sortByKey of keysToTest) {
+        const res = await request(app)
+          .get(`/api/reviews?sort_by=${sortByKey}`)
+          .expect(200);
+        expect(res.body.reviews).toBeSorted({
+          key: sortByKey,
+          descending: true,
+        });
+      }
+    });
+
+    test("400: respond with 'Bad request' when sort_by key is invalid", async () => {
       const res = await request(app)
-        .get(`/api/reviews?sort_by=${sortByKey}`)
-        .expect(200);
-      expect(res.body.reviews).toBeSorted({ key: sortByKey, descending: true });
-    }
+        .get("/api/reviews?sort_by=an_invalid_key")
+        .expect(400);
+      expect(res.body.msg).toBe("Bad request");
+
+      const res2 = await request(app)
+        .get(
+          "/api/reviews?sort_by=title;DROP TABLE comments; DROP TABLE reviews;"
+        )
+        .expect(400);
+      expect(res2.body.msg).toBe("Bad request");
+    });
+  });
+  describe("order by query", () => {
+    test("200: accept a 'order' query which can be 'asc' or 'desc' for ascending or descending", async () => {
+      const choicesForSortBy = [
+        "owner",
+        "title",
+        "review_id",
+        "category",
+        "review_img_url",
+        "created_at",
+        "votes",
+        "comment_count",
+      ];
+      const choicesForOrder = ["desc", "asc"];
+      const combinationsToTest = makeCombinations(
+        choicesForSortBy,
+        choicesForOrder
+      );
+
+      for (const [sort_by, order] of combinationsToTest) {
+        const res = await request(app)
+          .get(`/api/reviews?sort_by=${sort_by}&order=${order}`)
+          .expect(200);
+        expect(res.body.reviews.length).toBeGreaterThan(0);
+        expect(res.body.reviews).toBeSorted({
+          key: sort_by,
+          descending: order === "desc",
+        });
+      }
+    });
+    test("400: respond with 'Bad request' when `order` query is invalid", async () => {
+      const res = await request(app)
+        .get("/api/reviews?order=apple")
+        .expect(400);
+      expect(res.body.msg).toBe("Bad request");
+
+      const res2 = await request(app)
+        .get("/api/reviews?order=asc;DROP TABLE reviews;")
+        .expect(400);
+      expect(res2.body.msg).toBe("Bad request");
+    });
   });
 
-  test("400: respond with 'Bad request' when sort_by key is invalid", async () => {
-    const res = await request(app)
-      .get("/api/reviews?sort_by=an_invalid_key")
-      .expect(400);
-    expect(res.body.msg).toBe("Bad request");
-
-    const res2 = await request(app)
-      .get(
-        "/api/reviews?sort_by=title;DROP TABLE comments; DROP TABLE reviews;"
-      )
-      .expect(400);
-    expect(res2.body.msg).toBe("Bad request");
-  });
-
-  test("200: accept a 'order' query which can be 'asc' or 'desc' for ascending or descending", async () => {
-    const choicesForSortBy = [
-      "owner",
-      "title",
-      "review_id",
-      "category",
-      "review_img_url",
-      "created_at",
-      "votes",
-      "comment_count",
-    ];
-    const choicesForOrder = ["desc", "asc"];
-    const combinationsToTest = makeCombinations(
-      choicesForSortBy,
-      choicesForOrder
-    );
-
-    for (const [sort_by, order] of combinationsToTest) {
-      const result = await request(app)
-        .get(`/api/reviews?sort_by=${sort_by}&order=${order}`)
+  describe("`category` query", () => {
+    test("200: respond with reviews filtered by `category` given", async () => {
+      const testCategory = "social deduction";
+      const res = await request(app)
+        .get(`/api/reviews?category=${testCategory}`)
         .expect(200);
-      expect(result.body.reviews.length).toBeGreaterThan(0);
-      expect(result.body.reviews).toBeSorted({
-        key: sort_by,
-        descending: order === "desc",
+      expect(res.body.reviews).toHaveLength(11);
+      res.body.reviews.forEach((review) => {
+        expect(review.category === testCategory);
       });
-    }
-  });
+    });
 
-  test("400: respond with 'Bad request' when `order` query is invalid", async () => {
-    const res = await request(app).get("/api/reviews?order=apple").expect(400);
-    expect(res.body.msg).toBe("Bad request");
+    test("200: respond correctly even if 0 reviews in given category", async () => {
+      const category = "children's games";
+      const res = await request(app)
+        .get(`/api/reviews?category=${category}`)
+        .expect(200);
+      expect(res.body.reviews).toHaveLength(0);
+    });
 
-    const res2 = await request(app)
-      .get("/api/reviews?order=asc;DROP TABLE reviews;")
-      .expect(400);
-    expect(res2.body.msg).toBe("Bad request");
+    test("400: respond with 'Bad request' if category is invalid", async () => {
+      const res = await request(app)
+        .get(`/api/reviews?category=some_random_words`)
+        .expect(400);
+      expect(res.body.msg).toBe("Bad request");
+
+      const res2 = await request(app)
+        .get(`/api/reviews?sort_by=created_at&category=hello`)
+        .expect(400);
+      expect(res2.body.msg).toBe("Bad request");
+    });
+
+    test("200: can handle sort_by, order, category at the same time and respond correctly", async () => {
+      const choicesForSortBy = [
+        "owner",
+        "title",
+        "review_id",
+        "category",
+        "review_img_url",
+        "created_at",
+        "votes",
+        "comment_count",
+      ];
+      const choicesForOrder = ["desc", "asc"];
+      const choicesForCategory = [
+        "euro game",
+        "dexterity",
+        "social deduction",
+        "children's games",
+      ];
+
+      const combinationsToTest = makeCombinations(
+        choicesForSortBy,
+        choicesForOrder,
+        choicesForCategory
+      );
+
+      for (const [sort_by, order, category] of combinationsToTest) {
+        const res = await request(app)
+          .get(
+            `/api/reviews?sort_by=${sort_by}&order=${order}&category=${category}`
+          )
+          .expect(200);
+        if (category === "children's games") {
+          // no review for that category in test data.
+          expect(res.body.reviews.length).toBe(0);
+        } else {
+          expect(res.body.reviews.length).toBeGreaterThan(0);
+          expect(res.body.reviews).toBeSorted({
+            key: sort_by,
+            descending: order === "desc",
+          });
+        }
+      }
+    });
   });
 });

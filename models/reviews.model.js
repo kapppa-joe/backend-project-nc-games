@@ -1,5 +1,5 @@
 const db = require("../db");
-const format = require("pg-format");
+const { fetchCategories } = require("./categories.model.js");
 
 exports.fetchReviewById = async (review_id) => {
   const sqlQuery = {
@@ -61,12 +61,29 @@ function isValidOrder(order) {
   return ["asc", "desc"].includes(order.toLowerCase());
 }
 
-exports.selectReviews = async ({ sort_by = "created_at", order = "desc" }) => {
+async function validateCategory(slug) {
+  const validCategories = await fetchCategories();
+  const validSlugs = validCategories.map((category) => category.slug);
+  if (!validSlugs.includes(slug)) {
+    return Promise.reject({ status: 400, msg: "Bad request" });
+  }
+}
+
+exports.selectReviews = async ({
+  sort_by = "created_at",
+  order = "desc",
+  category = undefined,
+}) => {
   if (!isValidColumn(sort_by) || !isValidOrder(order)) {
     return Promise.reject({ status: 400, msg: "Bad request" });
   }
 
-  const sqlQuery = `
+  if (category) {
+    await validateCategory(category);
+  }
+
+  const sqlQuery = {
+    text: `
       SELECT 
         reviews.owner
         , reviews.title
@@ -80,7 +97,17 @@ exports.selectReviews = async ({ sort_by = "created_at", order = "desc" }) => {
         ON reviews.review_id = comments.review_id
       GROUP BY reviews.review_id
       ORDER BY ${sort_by} ${order}
-    `;
+    `,
+  };
+
+  if (category) {
+    sqlQuery.text = sqlQuery.text.replace(
+      "GROUP BY",
+      `WHERE reviews.category = $1 \n GROUP BY`
+    );
+    sqlQuery.values = [category];
+  }
+
   const result = await db.query(sqlQuery);
   return result.rows;
 };
