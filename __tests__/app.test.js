@@ -26,10 +26,8 @@ describe("GET /api/categories", () => {
 
 describe("GET /api/reviews/:review_id", () => {
   test("200: should respond with an review object", async () => {
-    for (let review_id = 1; review_id <= 13; review_id++) {
-      const res = await request(app)
-        .get(`/api/reviews/${review_id}`)
-        .expect(200);
+    for (let testId = 1; testId <= 13; testId++) {
+      const res = await request(app).get(`/api/reviews/${testId}`).expect(200);
 
       expect(res.body).toHaveProperty("review");
       const { review } = res.body;
@@ -37,7 +35,7 @@ describe("GET /api/reviews/:review_id", () => {
       expect(review).toMatchObject({
         owner: expect.any(String),
         title: expect.any(String),
-        review_id: review_id,
+        review_id: testId,
         review_body: expect.any(String),
         designer: expect.any(String),
         review_img_url: expect.any(String),
@@ -52,32 +50,32 @@ describe("GET /api/reviews/:review_id", () => {
   });
 
   test('404: respond with msg "review_id not exists" when review_id is is valid but does not exist', async () => {
-    const review_id = 99999;
-    const res = await request(app).get(`/api/reviews/${review_id}`).expect(404);
+    const testId = 99999;
+    const res = await request(app).get(`/api/reviews/${testId}`).expect(404);
     expect(res.body.msg).toBe("review_id not exists");
   });
 
   test('400: respond with msg "Bad request" when review_id is not valid', async () => {
-    const review_id = "1 ; DROP TABLE reviews;";
-    const res = await request(app).get(`/api/reviews/${review_id}`).expect(400);
+    const testId = "1 ; DROP TABLE reviews;"; // SQL injection!
+    const res = await request(app).get(`/api/reviews/${testId}`).expect(400);
     expect(res.body.msg).toBe("Bad request");
   });
 });
 
 describe("PATCH /api/reviews/:review_id", () => {
   test("200: accept object with inc_votes property and respond with patched review object", async () => {
-    const review_id = 2;
+    const testId = 2;
     const votesBeforePatch = 5;
     const inc_votes = 3;
 
     const res = await request(app)
-      .patch(`/api/reviews/${review_id}`)
+      .patch(`/api/reviews/${testId}`)
       .send({ inc_votes })
       .expect(200);
     expect(res.body).toHaveProperty("review");
 
     expect(res.body.review).toMatchObject({
-      review_id: review_id,
+      review_id: testId,
       votes: votesBeforePatch + inc_votes,
     });
 
@@ -89,12 +87,12 @@ describe("PATCH /api/reviews/:review_id", () => {
   });
 
   test("200: passing a negative inc_votes can decrease votes", async () => {
-    const review_id = 2;
+    const testId = 2;
     const votesBeforePatch = 5;
     const inc_votes = -10;
 
     const res = await request(app)
-      .patch(`/api/reviews/${review_id}`)
+      .patch(`/api/reviews/${testId}`)
       .send({ inc_votes })
       .expect(200);
     expect(res.body.review.votes).toBe(votesBeforePatch + inc_votes);
@@ -312,5 +310,50 @@ describe("GET /api/reviews", () => {
         }
       }
     });
+  });
+});
+
+describe("GET /api/reviews/:review_id/comments", () => {
+  test("200: respond with comments of given review_id", async () => {
+    const testId = 2;
+    const res = await request(app)
+      .get(`/api/reviews/${testId}/comments`)
+      .expect(200);
+
+    expect(res.body.comments).toHaveLength(3);
+
+    res.body.comments.forEach((comment) => {
+      expect(comment).toMatchObject({
+        comment_id: expect.any(Number),
+        votes: expect.any(Number),
+        created_at: expect.any(String),
+        author: expect.any(String),
+        body: expect.any(String),
+        review_id: testId,
+      });
+      expect(new Date(comment.created_at).toString()).not.toBe("Invalid Date");
+    });
+  });
+
+  test("200: respond with empty array when given review_id has no comments", async () => {
+    const testId = 1;
+    const res = await request(app)
+      .get(`/api/reviews/${testId}/comments`)
+      .expect(200);
+    expect(res.body.comments).toHaveLength(0);
+  });
+
+  test("400: respond with 'Bad request' when review_id is invalid", async () => {
+    const res = await request(app)
+      .get("/api/reviews/jaffa_cake_is_biscuit/comments")
+      .expect(400);
+    expect(res.body.msg).toBe("Bad request");
+  });
+
+  test("404: respond with 'review_id not exists' when review_id is valid but not exist", async () => {
+    const res = await request(app)
+      .get("/api/reviews/99999/comments")
+      .expect(404);
+    expect(res.body.msg).toBe("review_id not exists");
   });
 });
