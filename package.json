@@ -9,6 +9,11 @@
     "test": "jest --watch",
     "dev": "nodemon listen.js"
   },
+  "jest": {
+    "setupFilesAfterEnv": [
+      "jest-sorted"
+    ]
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/northcoders/be-nc-games.git"
