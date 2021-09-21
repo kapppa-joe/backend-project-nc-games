@@ -31,15 +31,16 @@ describe("GET /api/reviews/:review_id", () => {
     const { review } = res.body;
 
     expect(review).toMatchObject({
-      review_id: review_id,
-      title: expect.any(String),
-      designer: expect.any(String),
       owner: expect.any(String),
-      review_img_url: expect.any(String),
+      title: expect.any(String),
+      review_id: review_id,
       review_body: expect.any(String),
+      designer: expect.any(String),
+      review_img_url: expect.any(String),
       category: expect.any(String),
       created_at: expect.any(String),
       votes: expect.any(Number),
+      comment_count: expect.any(Number),
     });
 
     expect(new Date(review.created_at).toString()).not.toBe("Invalid Date");
