@@ -1,6 +1,4 @@
-const errorHandlers = {};
-
-errorHandlers.handlePsql400Error = (err, req, res, next) => {
+const handlePsql400Error = (err, req, res, next) => {
   const errorCodesToHandle = ["22P02"];
   if (errorCodesToHandle.includes(err.code)) {
     res.status(400).send({ msg: "Bad request" });
@@ -9,7 +7,7 @@ errorHandlers.handlePsql400Error = (err, req, res, next) => {
   }
 };
 
-errorHandlers.handleCustomErrors = (err, req, res, next) => {
+const handleCustomErrors = (err, req, res, next) => {
   if (err.status) {
     res.status(err.status).send({ msg: err.msg });
   } else {
@@ -17,16 +15,17 @@ errorHandlers.handleCustomErrors = (err, req, res, next) => {
   }
 };
 
-errorHandlers.handle500Errors = (err, req, res, next) => {
-  console.log(`error caught at handling req: ${req.method}, ${req.url}`);
+const handle500Errors = (err, req, res, next) => {
+  console.log(`error caught when handling req: ${req.method}, ${req.url}`);
   console.error(err);
   res.status(500).send({ msg: "Internal Server Error" });
 };
 
+const errorHandlers = [handlePsql400Error, handleCustomErrors, handle500Errors];
+
 exports.applyErrorHandlers = (app) => {
-  for (const key in errorHandlers) {
-    console.log(key);
-    app.use(errorHandlers[key]);
+  for (const errorHandler of errorHandlers) {
+    app.use(errorHandler);
   }
   return app;
 };
