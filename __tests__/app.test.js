@@ -10,10 +10,44 @@ const { makeCombinations } = require("../utils/");
 beforeEach(() => seed(testData));
 afterAll(() => db.end());
 
+expect.extend({
+  toBeSubsetOf(receivedArray, arraytoCompare) {
+    const pass = receivedArray.every((elem) => arraytoCompare.includes(elem));
+    if (pass) {
+      return {
+        message: () =>
+          `expected ${receivedArray} not to be subset of ${arraytoCompare}`,
+        pass: true,
+      };
+    } else {
+      return {
+        message: () =>
+          `expected ${receivedArray} to be subset of ${arraytoCompare}`,
+        pass: false,
+      };
+    }
+  },
+});
+
 describe("GET /not-a-route", () => {
   test("404: respond with msg 'Not found'", async () => {
     const res = await request(app).get("/api/not-a-route").expect(404);
     expect(res.body.msg).toBe("Not found");
+  });
+});
+
+describe("GET /api", () => {
+  test("200: should respond with an array of available endpoints", async () => {
+    const res = await request(app).get("/api").expect(200);
+    expect(res.body.endPoints.length).toBeGreaterThan(0);
+    res.body.endPoints.forEach((endPoint) => {
+      expect(endPoint).toMatchObject({
+        path: expect.any(String),
+        methods: expect.any(Array),
+        url: expect.any(String),
+      });
+      expect(endPoint.methods).toBeSubsetOf(["GET", "POST", "DELETE", "PATCH"]);
+    });
   });
 });
 
