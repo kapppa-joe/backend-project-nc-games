@@ -522,3 +522,26 @@ describe("GET /api/users", () => {
     });
   });
 });
+
+describe("GET /api/users/:username", () => {
+  test("200: respond with a user object", async () => {
+    const testUsername = "bainesface";
+    const res = await request(app)
+      .get(`/api/users/${testUsername}`)
+      .expect(200);
+
+    expect(res.body.user).toEqual({
+      username: testUsername,
+      name: expect.any(String),
+      avatar_url: expect.any(String),
+    });
+  });
+
+  test("404: respond with 'username not exists' when given an invalid username", async () => {
+    const testUsername = `nobody OR 1=1`;
+    const res = await request(app)
+      .get(`/api/users/${testUsername}`)
+      .expect(404);
+    expect(res.body.msg).toBe("username not exists");
+  });
+});
