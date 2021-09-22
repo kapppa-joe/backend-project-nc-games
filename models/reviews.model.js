@@ -70,7 +70,7 @@ async function validateCategory(slug) {
 }
 
 function validateLimitAndPage(limit, p) {
-  if (isNaN(p) || isNaN(limit)) {
+  if (isNaN(parseInt(p)) || isNaN(parseInt(limit))) {
     return Promise.reject({ status: 400, msg: "Bad request" });
   }
 }
