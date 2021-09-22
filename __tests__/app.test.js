@@ -479,7 +479,7 @@ describe("POST /api/reviews/:review_id/comments", () => {
   });
 });
 
-describe.only("DELETE /api/comments/:comment_id", () => {
+describe("DELETE /api/comments/:comment_id", () => {
   test("204: delete the comment of given comment_id and respond with no content", async () => {
     const testId = 2;
     const res = await request(app)

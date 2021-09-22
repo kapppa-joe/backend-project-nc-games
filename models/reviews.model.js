@@ -82,6 +82,12 @@ exports.selectReviews = async ({
     await validateCategory(category);
   }
 
+  // cast varChar columns to bytea when sorting, so that it sort like what js expected
+  const varCharColumns = ["title", "owner", "category", "review_img_url"];
+  if (varCharColumns.includes(sort_by)) {
+    sort_by = `${sort_by}::bytea`;
+  }
+
   const sqlQuery = {
     text: `
       SELECT 
