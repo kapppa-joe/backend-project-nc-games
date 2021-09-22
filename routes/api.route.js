@@ -3,9 +3,11 @@ const listEndpoints = require("express-list-endpoints");
 
 const categoriesRouter = require("./categories.route");
 const reviewsRouter = require("./reviews.route");
+const commentsRouter = require("./comments.route");
 
 apiRouter.use("/categories", categoriesRouter);
 apiRouter.use("/reviews", reviewsRouter);
+apiRouter.use("/comments", commentsRouter);
 
 apiRouter.get("/", getAllEndpoints);
 

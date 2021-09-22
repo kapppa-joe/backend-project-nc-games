@@ -43,3 +43,17 @@ exports.insertCommentByReviewId = async (review_id, newComment) => {
   const result = await db.query(sqlQuery);
   return result.rows[0];
 };
+
+exports.deleteCommentById = async (comment_id) => {
+  const sqlQuery = {
+    text: `
+      DELETE FROM comments
+      WHERE comment_id = $1
+      RETURNING *;
+    `,
+    values: [comment_id],
+  };
+
+  const result = await db.query(sqlQuery);
+  return result.rows[0];
+};

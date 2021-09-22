@@ -478,3 +478,35 @@ describe("POST /api/reviews/:review_id/comments", () => {
     expect(res.body.msg).toBe("Bad request");
   });
 });
+
+describe.only("DELETE /api/comments/:comment_id", () => {
+  test("204: delete the comment of given comment_id and respond with no content", async () => {
+    const testId = 2;
+    const res = await request(app)
+      .delete(`/api/comments/${testId}`)
+      .expect(204);
+    expect(res.body).toEqual({});
+
+    const result = await db.query(
+      `SELECT * FROM comments WHERE comment_id = ${testId}`
+    );
+    expect(result.rows).toHaveLength(0);
+  });
+
+  test("404: respond with 'comment_id not exists' when given comment_id is wellformed but not in databose", async () => {
+    const res = await request(app).delete("/api/comments/99999").expect(404);
+    expect(res.body.msg).toBe("comment_id not exists");
+  });
+
+  test("400: respond with 'Bad request' when comment_id is invalid", async () => {
+    const res = await request(app)
+      .delete("/api/comments/puppy_running_around")
+      .expect(400);
+    expect(res.body.msg).toBe("Bad request");
+
+    const res2 = await request(app)
+      .delete("/api/comments/3;DROP TABLE comments")
+      .expect(400);
+    expect(res2.body.msg).toBe("Bad request");
+  });
+});
