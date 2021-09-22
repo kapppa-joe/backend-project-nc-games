@@ -510,3 +510,15 @@ describe("DELETE /api/comments/:comment_id", () => {
     expect(res2.body.msg).toBe("Bad request");
   });
 });
+
+describe("GET /api/users", () => {
+  test("200: respond with an array of usernames", async () => {
+    const res = await request(app).get("/api/users").expect(200);
+    expect(res.body.users).toHaveLength(4); // test data has 4 users
+    res.body.users.forEach((user) => {
+      expect(user).toEqual({
+        username: expect.any(String),
+      });
+    });
+  });
+});
