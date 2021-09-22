@@ -10,6 +10,13 @@ const { makeCombinations } = require("../utils/");
 beforeEach(() => seed(testData));
 afterAll(() => db.end());
 
+describe("GET /not-a-route", () => {
+  test("404: respond with msg 'Not found'", async () => {
+    const res = await request(app).get("/api/not-a-route").expect(404);
+    expect(res.body.msg).toBe("Not found");
+  });
+});
+
 describe("GET /api/categories", () => {
   test("200: should respond with an array of categories", async () => {
     const res = await request(app).get("/api/categories").expect(200);
@@ -49,7 +56,7 @@ describe("GET /api/reviews/:review_id", () => {
     }
   });
 
-  test('404: respond with msg "review_id not exists" when review_id is is valid but does not exist', async () => {
+  test('404: respond with msg "review_id not exists" when review_id is wellformed but does not exist', async () => {
     const testId = 99999;
     const res = await request(app).get(`/api/reviews/${testId}`).expect(404);
     expect(res.body.msg).toBe("review_id not exists");
@@ -94,6 +101,23 @@ describe("PATCH /api/reviews/:review_id", () => {
     const res = await request(app)
       .patch(`/api/reviews/${testId}`)
       .send({ inc_votes })
+      .expect(200);
+    expect(res.body.review.votes).toBe(votesBeforePatch + inc_votes);
+  });
+
+  test("200: should only handle inc_votes and ignore other irrelevent properties", async () => {
+    const testId = 1;
+    const votesBeforePatch = 1;
+    const inc_votes = 6;
+
+    const res = await request(app)
+      .patch(`/api/reviews/${testId}`)
+      .send({
+        inc_votes,
+        category: "dexterity",
+        username: "Paul",
+        jaffa_cakes_are_biscuits: true,
+      })
       .expect(200);
     expect(res.body.review.votes).toBe(votesBeforePatch + inc_votes);
   });
@@ -252,7 +276,7 @@ describe("GET /api/reviews", () => {
       });
     });
 
-    test("200: respond correctly even if 0 reviews in given category", async () => {
+    test("200: respond with 200 OK for categories which do exist but have no reviews related to it", async () => {
       const category = "children's games";
       const res = await request(app)
         .get(`/api/reviews?category=${category}`)
