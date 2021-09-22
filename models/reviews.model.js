@@ -69,6 +69,25 @@ async function validateCategory(slug) {
   }
 }
 
+function validateLimitAndPage(limit, p) {
+  if (isNaN(p) || isNaN(limit)) {
+    return Promise.reject({ status: 400, msg: "Bad request" });
+  }
+}
+
+async function getTotalCounts(category) {
+  const totalCountQuery = {
+    text: `SELECT COUNT(review_id)::INT as total_count FROM reviews`,
+  };
+  if (category) {
+    totalCountQuery.text += ` WHERE reviews.category = $1`;
+    totalCountQuery.values = [category];
+  }
+
+  const result = await db.query(totalCountQuery);
+  return result.rows[0].total_count;
+}
+
 exports.selectReviews = async ({
   sort_by = "created_at",
   order = "desc",
@@ -84,16 +103,10 @@ exports.selectReviews = async ({
     await validateCategory(category);
   }
 
-  // handles pagination query
-  limit = parseInt(limit);
-  p = parseInt(p);
-
-  if (isNaN(p) || isNaN(limit)) {
-    return Promise.reject({ status: 400, msg: "Bad request" });
-  }
+  await validateLimitAndPage(limit, p);
   const offset = (p - 1) * limit;
 
-  // cast varChar columns to bytea when sorting, so that it sort like what js expected
+  // cast varChar columns to bytea when sorting, so that psql sort like what js expects
   const varCharColumns = ["title", "owner", "category", "review_img_url"];
   if (varCharColumns.includes(sort_by)) {
     sort_by = `${sort_by}::bytea`;
@@ -119,26 +132,16 @@ exports.selectReviews = async ({
     values: [limit, offset],
   };
 
-  // query for getting the total count
-  const totalCountQuery = {
-    text: `SELECT COUNT(review_id)::INT as total_count FROM reviews`,
-  };
-
   if (category) {
     sqlQuery.text = sqlQuery.text.replace(
       "GROUP BY",
       `WHERE reviews.category = $${sqlQuery.values.length + 1} \n GROUP BY`
     );
     sqlQuery.values.push(category);
-
-    totalCountQuery.text += ` WHERE reviews.category = $1`;
-    totalCountQuery.values = [category];
   }
 
-  const [result, total_count] = await Promise.all([
-    db.query(sqlQuery),
-    db.query(totalCountQuery),
-  ]);
+  const result = await db.query(sqlQuery);
+  const total_count = await getTotalCounts(category);
 
-  return { reviews: result.rows, ...total_count.rows[0] };
+  return { reviews: result.rows, total_count: total_count };
 };
