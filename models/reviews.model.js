@@ -73,6 +73,8 @@ exports.selectReviews = async ({
   sort_by = "created_at",
   order = "desc",
   category = undefined,
+  limit = 10,
+  p = 1,
 }) => {
   if (!isValidColumn(sort_by) || !isValidOrder(order)) {
     return Promise.reject({ status: 400, msg: "Bad request" });
@@ -81,6 +83,15 @@ exports.selectReviews = async ({
   if (category) {
     await validateCategory(category);
   }
+
+  // handles pagination query
+  limit = parseInt(limit);
+  p = parseInt(p);
+
+  if (isNaN(p) || isNaN(limit)) {
+    return Promise.reject({ status: 400, msg: "Bad request" });
+  }
+  const offset = (p - 1) * limit;
 
   // cast varChar columns to bytea when sorting, so that it sort like what js expected
   const varCharColumns = ["title", "owner", "category", "review_img_url"];
@@ -103,17 +114,31 @@ exports.selectReviews = async ({
         ON reviews.review_id = comments.review_id
       GROUP BY reviews.review_id
       ORDER BY ${sort_by} ${order}
+      LIMIT $1 OFFSET $2
     `,
+    values: [limit, offset],
+  };
+
+  // query for getting the total count
+  const totalCountQuery = {
+    text: `SELECT COUNT(review_id)::INT as total_count FROM reviews`,
   };
 
   if (category) {
     sqlQuery.text = sqlQuery.text.replace(
       "GROUP BY",
-      `WHERE reviews.category = $1 \n GROUP BY`
+      `WHERE reviews.category = $${sqlQuery.values.length + 1} \n GROUP BY`
     );
-    sqlQuery.values = [category];
+    sqlQuery.values.push(category);
+
+    totalCountQuery.text += ` WHERE reviews.category = $1`;
+    totalCountQuery.values = [category];
   }
 
-  const result = await db.query(sqlQuery);
-  return result.rows;
+  const [result, total_count] = await Promise.all([
+    db.query(sqlQuery),
+    db.query(totalCountQuery),
+  ]);
+
+  return { reviews: result.rows, ...total_count.rows[0] };
 };

@@ -191,7 +191,7 @@ describe("GET /api/reviews", () => {
     const res = await request(app).get("/api/reviews").expect(200);
 
     expect(res.body).toHaveProperty("reviews");
-    expect(res.body.reviews).toHaveLength(13);
+    expect(res.body.reviews.length).toBeGreaterThan(0);
 
     res.body.reviews.forEach((review) => {
       expect(review).toMatchObject({
@@ -208,7 +208,7 @@ describe("GET /api/reviews", () => {
     });
   });
 
-  test("200: reviews should be sorted by create_at date in desc order by default", async () => {
+  test("200: reviews should be sorted by `create_at` date in desc order by default", async () => {
     const res = await request(app).get("/api/reviews").expect(200);
 
     const { reviews } = res.body;
@@ -218,7 +218,7 @@ describe("GET /api/reviews", () => {
     });
   });
 
-  describe("sort_by query", () => {
+  describe("GET /api/reviews `sort_by` query", () => {
     test("200: accept a sort_by query and respond with sorted results", async () => {
       const keysToTest = [
         "owner",
@@ -256,7 +256,8 @@ describe("GET /api/reviews", () => {
       expect(res2.body.msg).toBe("Bad request");
     });
   });
-  describe("order by query", () => {
+
+  describe("GET /api/reviews `order` query", () => {
     test("200: accept a 'order' query which can be 'asc' or 'desc' for ascending or descending", async () => {
       const choicesForSortBy = [
         "owner",
@@ -298,13 +299,13 @@ describe("GET /api/reviews", () => {
     });
   });
 
-  describe("category query", () => {
+  describe("GET /api/reviews `category` query", () => {
     test("200: respond with reviews filtered by `category` given", async () => {
       const testCategory = "social deduction";
       const res = await request(app)
         .get(`/api/reviews?category=${testCategory}`)
         .expect(200);
-      expect(res.body.reviews).toHaveLength(11);
+      expect(res.body.reviews.length).toBeGreaterThan(0);
       res.body.reviews.forEach((review) => {
         expect(review.category === testCategory);
       });
@@ -372,6 +373,78 @@ describe("GET /api/reviews", () => {
           });
         }
       }
+    });
+  });
+
+  describe("GET /api/reviews pagination", () => {
+    test("200: accept query `limit`, `p` and respond with limited results", async () => {
+      const testLimit = 5;
+      const testPageNo = 2;
+      const res = await request(app)
+        .get(
+          `/api/reviews?sort_by=review_id&order=asc&limit=${testLimit}&p=${testPageNo}`
+        )
+        .expect(200);
+      expect(res.body.reviews).toHaveLength(testLimit);
+      expect(res.body.reviews[0].review_id).toBe(
+        testLimit * (testPageNo - 1) + 1
+      );
+    });
+
+    test("200: show result of 1-10 by default", async () => {
+      const res = await request(app)
+        .get("/api/reviews?sort_by=review_id&order=asc")
+        .expect(200);
+      expect(res.body.reviews).toHaveLength(10);
+      expect(res.body.reviews[0].review_id).toBe(1);
+      expect(res.body.reviews[9].review_id).toBe(10);
+    });
+
+    test("200: provide a `total_count` property displaying the total number of reviews", async () => {
+      const res = await request(app).get("/api/reviews").expect(200);
+      expect(res.body).toHaveProperty("total_count");
+      expect(res.body.total_count).toBe(13);
+    });
+
+    test("200: `limit`, `p` and `total_count` should work correctly with category filter applied", async () => {
+      const testCategory = "social deduction";
+      const limit = 3;
+      const p = 3;
+      const res = await request(app)
+        .get(
+          `/api/reviews?p=${p}&limit=${limit}&category=${testCategory}&order=asc&sort_by=review_id`
+        )
+        .expect(200);
+
+      expect(res.body.reviews).toHaveLength(3);
+      expect(res.body.total_count).toBe(11);
+      res.body.reviews.forEach((review) => {
+        expect(review.category).toBe(testCategory);
+      });
+    });
+
+    test("200: respond OK and respond with empty array if limit & p exceed the total count of data", async () => {
+      const res = await request(app)
+        .get("/api/reviews?limit=1000&p=1000")
+        .expect(200);
+      expect(res.body.reviews).toEqual([]);
+    });
+
+    test("400: respond with bad request when either limit or p or both are invalid or empty", async () => {
+      const testPromises = [
+        request(app).get("/api/reviews?limit=cat").expect(400),
+        request(app).get("/api/reviews?p=apple").expect(400),
+        request(app).get("/api/reviews?limit=-3").expect(400),
+        request(app).get("/api/reviews?p=-10").expect(400),
+        request(app).get("/api/reviews?limit=").expect(400),
+        request(app).get("/api/reviews?p=").expect(400),
+        request(app).get("/api/reviews?limit=&p=").expect(400),
+        request(app).get("/api/reviews?limit=cat&p=dog").expect(400),
+      ];
+      const results = await Promise.all(testPromises);
+      results.forEach((res) => {
+        expect(res.body.msg).toBe("Bad request");
+      });
     });
   });
 });
