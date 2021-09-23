@@ -27,6 +27,7 @@
   },
   "PATCH /api/comments/:comment_id": {
     "description": "accepts a json object `{inc_votes: num}` and increase/decrease the `votes` property of specified review. responds with the updated comment",
+    "requiredKeysInReqBody": ["inc_votes"],
     "exampleResponse": {
       "comment": {
         "comment_id": 1,
@@ -56,7 +57,23 @@
     }
   },
   "POST /api/reviews": {
-    "description": "accepts a json object with properties `owner`(=username from users table), `title`, `review_body`, `designer`, `category`, `review_img_url` and saves it as a new comment in database. Responds with a json representation of the newly added review. `designer` and `review_img_url` can be omitted."
+    "description": "accepts a new review in json format and store it in database. Responds with a json representation of the newly added review.",
+    "requiredKeysInReqBody": ["owner", "title", "review_body", "category"],
+    "optionalKeysInReqBody": ["designer", "review_img_url"],
+    "exampleResponse": {
+      "review": {
+        "review_id": 26,
+        "title": "a new review!",
+        "review_body": "this game is soooooo funny! I can play it all days long!",
+        "designer": null,
+        "review_img_url": "https://images.pexels.com/photos/163064/play-stone-network-networked-interactive-163064.jpeg",
+        "votes": 0,
+        "category": "strategy",
+        "owner": "tickle122",
+        "created_at": "2021-09-23T21:58:55.653Z",
+        "comment_count": 0
+      }
+    }
   },
   "GET /api/reviews/:review_id": {
     "description": "serves up a json representation of the specified review",
@@ -87,6 +104,7 @@
   },
   "PATCH /api/reviews/:review_id": {
     "description": "accepts a json object `{inc_votes: num}` and increase/decrease the `votes` property of specified review. responds with the updated review",
+    "requiredKeysInReqBody": ["inc_votes"],
     "exampleResponse": {
       "review": {
         "review_id": 1,
@@ -133,7 +151,8 @@
     }
   },
   "POST /api/reviews/:review_id/comments": {
-    "description": "accepts a json object with property `username` and `body` and saves it as a new comment in database.",
+    "description": "accepts a new comment in json format and store it in database. Responds with the newly added comment object.",
+    "requiredKeysInReqBody": ["username", "body"],
     "exampleResponse": {
       "comment": {
         "comment_id": 63,
