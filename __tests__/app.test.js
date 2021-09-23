@@ -644,3 +644,61 @@ describe("GET /api/users/:username", () => {
     expect(res.body.msg).toBe("username not exists");
   });
 });
+
+describe("PATCH /api/comments/:comment_id", () => {
+  test("200: accept object with inc_votes property and respond with patched review object", async () => {
+    const testId = 2;
+    const votesBeforePatch = 13;
+    const inc_votes = 6;
+
+    const res = await request(app)
+      .patch(`/api/comments/${testId}`)
+      .send({ inc_votes })
+      .expect(200);
+    expect(res.body).toHaveProperty("comment");
+
+    expect(res.body.comment).toMatchObject({
+      comment_id: testId,
+      votes: votesBeforePatch + inc_votes,
+    });
+
+    // verify that votes in db is updated
+    const queryResult = await db.query(
+      `SELECT votes FROM comments WHERE comment_id = ${testId}`
+    );
+    expect((queryResult.rows[0].votes = votesBeforePatch + inc_votes));
+  });
+
+  test("400: respond with 'Bad request' if the req body is invalid or empty", async () => {
+    const testPromises = [
+      request(app)
+        .patch("/api/comments/1")
+        .send({ inc_votes: "cats" })
+        .expect(400),
+      request(app).patch("/api/comments/1").send({ inc_votes: "" }).expect(400),
+      request(app).patch("/api/comments/1").send({}).expect(400),
+      request(app).patch("/api/comments/1").send({ pet: "dog" }).expect(400),
+      request(app).patch("/api/comments/1").send({ votes: 10 }).expect(400),
+    ];
+    const results = await Promise.all(testPromises);
+    results.forEach((res) => {
+      expect(res.body.msg).toBe("Bad request");
+    });
+  });
+
+  test("400: respond with 'bad request' if comment_id is invalid", async () => {
+    const res = await request(app)
+      .patch("/api/comments/3;DROP TABLE comments")
+      .send({ inc_votes: 10 })
+      .expect(400);
+    expect(res.body.msg).toBe("Bad request");
+  });
+
+  test("404: respond with 'comment_id not exists' if comment_id is wellformed but not in database", async () => {
+    const res = await request(app)
+      .patch("/api/comments/99999")
+      .send({ inc_votes: 10 })
+      .expect(404);
+    expect(res.body.msg).toBe("comment_id not exists");
+  });
+});

@@ -25,6 +25,19 @@
     "description": "delete the comment of specified id",
     "exampleResponse": "(204 No Content)"
   },
+  "PATCH /api/comments/:comment_id": {
+    "description": "accepts a json object `{inc_votes: num}` and increase/decrease the `votes` property of specified review. responds with the updated comment",
+    "exampleResponse": {
+      "comment": {
+        "comment_id": 1,
+        "author": "happyamy2016",
+        "review_id": 2,
+        "votes": 13,
+        "created_at": "2017-11-22T12:36:03.389Z",
+        "body": "I loved this game too!"
+      }
+    }
+  },
   "GET /api/reviews": {
     "description": "serves an array of all reviews",
     "queries": ["category", "sort_by", "order", "p", "limit"],

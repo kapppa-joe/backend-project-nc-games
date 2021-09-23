@@ -155,7 +155,7 @@ Server Response:
 ### A little TODOs for myself:
 
 - Implement the below when have time:
-  - [ ] PATCH /api/comments/:comment_id
+  - [x] PATCH /api/comments/:comment_id
   - [ ] POST /api/reviews
   - [ ] POST /api/categories
   - [ ] DELETE /api/reviews/:review_id

@@ -57,3 +57,44 @@ exports.deleteCommentById = async (comment_id) => {
   const result = await db.query(sqlQuery);
   return result.rows[0];
 };
+
+exports.selectCommentById = async (comment_id) => {
+  const sqlQuery = {
+    text: `
+      SELECT * FROM comments 
+      WHERE comment_id = $1
+    `,
+    values: [comment_id],
+  };
+  const result = await db.query(sqlQuery);
+  return result.rows[0];
+};
+
+exports.updateCommentById = async (comment_id, inc_votes) => {
+  if (isNaN(parseInt(inc_votes))) {
+    return Promise.reject({ status: 400, msg: "Bad request" });
+  }
+
+  // get the votes number before adding
+  const commentBeforeUpdate = await this.selectCommentById(comment_id);
+  if (!commentBeforeUpdate) {
+    return Promise.reject({ status: 404, msg: "comment_id not exists" });
+  }
+
+  const { votes: currentVotes } = commentBeforeUpdate;
+
+  const newVotes = currentVotes + inc_votes;
+
+  const sqlQuery = {
+    text: `
+      UPDATE comments
+        SET votes = $1
+      WHERE comment_id = $2
+      RETURNING * ;
+    `,
+    values: [newVotes, comment_id],
+  };
+  const result = await db.query(sqlQuery);
+
+  return result.rows[0];
+};
