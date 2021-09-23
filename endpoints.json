@@ -7,8 +7,16 @@
     "exampleResponse": {
       "categories": [
         {
-          "description": "Players attempt to uncover each other's hidden role",
-          "slug": "Social deduction"
+          "slug": "strategy",
+          "description": "Strategy-focused board games that prioritise limited-randomness"
+        },
+        {
+          "slug": "hidden-roles",
+          "description": "One or more players around the table have a secret, and the rest of you need to figure out who! Players attempt to uncover each other's hidden role"
+        },
+        {
+          "slug": "dexterity",
+          "description": "Games involving physical skill, something like Gladiators, for Board Games!"
         }
       ]
     }
@@ -37,18 +45,28 @@
   "GET /api/reviews/:review_id": {
     "description": "serves up a json representation of the specified review",
     "exampleResponse": {
-      "review": {
-        "review_id": 1,
-        "title": "Culture a Love of Agriculture With Agricola",
-        "review_body": "You could sum up Agricola with the simple phrase 'Farmyeard Fun' but the mechanics and game play add so much more than that. You'll find yourself torn between breeding pigs, or sowing crops. Its joyeous and rewarding and it makes you think of time spent outside, which is much harder to do these days!",
-        "designer": "Uwe Rosenberg",
-        "review_img_url": "https://images.pexels.com/photos/4917821/pexels-photo-4917821.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
-        "votes": 1,
-        "category": "strategy",
-        "owner": "tickle122",
-        "created_at": "2021-01-18T10:00:20.514Z",
-        "comment_count": 3
-      }
+      "reviews": [
+        {
+          "owner": "cooljmessy",
+          "title": "Velit tempor ullamco amet ipsum dolor voluptate.",
+          "review_id": 14,
+          "category": "hidden-roles",
+          "review_img_url": "https://images.pexels.com/photos/163064/play-stone-network-networked-interactive-163064.jpeg",
+          "created_at": "2021-02-05T11:27:26.563Z",
+          "votes": 3,
+          "comment_count": 0
+        },
+        {
+          "owner": "tickle122",
+          "title": "Kerplunk; Don't lose your marbles",
+          "review_id": 13,
+          "category": "dexterity",
+          "review_img_url": "https://images.pexels.com/photos/278888/pexels-photo-278888.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
+          "created_at": "2021-01-25T11:16:54.963Z",
+          "votes": 9,
+          "comment_count": 3
+        }
+      ]
     }
   },
   "PATCH /api/reviews/:review_id": {
