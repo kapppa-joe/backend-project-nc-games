@@ -1,8 +1,7 @@
 name: Test & Deploy
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 
 job:
   test:
@@ -12,24 +11,23 @@ job:
       - name: Checkout Repo
         uses: actions/checkout@v2
 
-  - name: Use Node.js
-    uses: actions/setup-node@v1
-    with:
-      node-version: 15
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 15
 
-  - name: Use PostgreSQL
-    uses: harmon758/postgresql-action@v1
-    with:
-      postgresql db: 'my_db'
-      postgresql user: 'test_user'
-      postgresql password: 'test_password'
+      - name: Use PostgreSQL
+        uses: harmon758/postgresql-action@v1
+        with:
+          postgresql db: 'my_db'
+          postgresql user: 'test_user'
+          postgresql password: 'test_password'
       
+      - name: Install dependencies
+        run: npm ci
 
-    - name: Install dependencies
-      run: npm ci
-
-    - name: Run tests
-      run: PGDATABASE=my_db PGUSER=test_user PGPASSWORD=test_password npm t
+      - name: Run tests
+        run: PGDATABASE=my_db PGUSER=test_user PGPASSWORD=test_password npm t
 
 
   deploy:
