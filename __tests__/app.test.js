@@ -702,3 +702,112 @@ describe("PATCH /api/comments/:comment_id", () => {
     expect(res.body.msg).toBe("comment_id not exists");
   });
 });
+
+describe("POST /api/reviews", () => {
+  test("201: accept a new review and respond with review object", async () => {
+    const testReview = {
+      owner: "bainesface",
+      title: "A new review",
+      designer: "Lawson Kautzer",
+      category: "children's games",
+      review_body: "This game is sooo funny!",
+    };
+
+    const startOfRequest = new Date();
+    const res = await request(app)
+      .post("/api/reviews")
+      .send(testReview)
+      .expect(201);
+    const endOfRequest = new Date();
+
+    expect(res.body.review).toMatchObject({
+      review_id: 14,
+      created_at: expect.any(String),
+      votes: 0,
+      comment_count: 0,
+      ...testReview,
+    });
+
+    // check the create_at timestamp to be generated correctly
+    const timeStampOfNewReview = new Date(res.body.review.created_at);
+    expect(timeStampOfNewReview > startOfRequest).toBe(true);
+    expect(timeStampOfNewReview < endOfRequest).toBe(true);
+  });
+
+  test("400: respond with 'Bad request' if req body is empty", async () => {
+    const res = await request(app).post("/api/reviews").send("").expect(400);
+    expect(res.body.msg).toBe("Bad request");
+  });
+
+  test("400: respond with 'Bad request' if any of the columns `owner`, `review_body` or `category` are missing", async () => {
+    const testReviews = [
+      {
+        // owner missing
+        title: "A new review",
+        review_body: "This game is sooooooooo funny!",
+        designer: "Lawson Kautzer",
+        category: "children's games",
+        review_img_url:
+          "https://cdn.pixabay.com/photo/2019/07/30/05/53/dog-4372036_1280.jpg",
+      },
+      {
+        owner: "bainesface",
+        title: "A new review",
+        // review_body missing
+        designer: "Lawson Kautzer",
+        category: "children's games",
+        review_img_url:
+          "https://cdn.pixabay.com/photo/2019/07/30/05/53/dog-4372036_1280.jpg",
+      },
+      {
+        owner: "bainesface",
+        title: "A new review",
+        review_body: "This game is sooooooooo funny!",
+        designer: "Lawson Kautzer",
+        // category missing
+        review_img_url:
+          "https://cdn.pixabay.com/photo/2019/07/30/05/53/dog-4372036_1280.jpg",
+      },
+    ];
+
+    const testPromises = testReviews.map((review) =>
+      request(app).post("/api/reviews").send(review).expect(400)
+    );
+    const results = await Promise.all(testPromises);
+
+    results.forEach((res) => {
+      expect(res.body.msg).toBe("Bad request");
+    });
+  });
+
+  test("400: respond with 'Bad request' if `owner` or `category` does not match the record in db", async () => {
+    const testReviews = [
+      {
+        owner: "no_such_user",
+        title: "A new review",
+        review_body: "This game is sooooooooo funny!",
+        designer: "Lawson Kautzer",
+        category: "children's games",
+        review_img_url:
+          "https://cdn.pixabay.com/photo/2019/07/30/05/53/dog-4372036_1280.jpg",
+      },
+      {
+        owner: "bainesface",
+        title: "A new review",
+        review_body: "This game is sooooooooo funny!",
+        designer: "Lawson Kautzer",
+        category: "an invalid category",
+        review_img_url:
+          "https://cdn.pixabay.com/photo/2019/07/30/05/53/dog-4372036_1280.jpg",
+      },
+    ];
+
+    for (const review of testReviews) {
+      const res = await request(app)
+        .post("/api/reviews/")
+        .send(review)
+        .expect(400);
+      expect(res.body.msg).toBe("Bad request");
+    }
+  });
+});

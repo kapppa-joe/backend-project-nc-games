@@ -55,6 +55,9 @@
       ]
     }
   },
+  "POST /api/reviews": {
+    "description": "accepts a json object with properties `owner`(=username from users table), `title`, `review_body`, `designer`, `category`, `review_img_url` and saves it as a new comment in database. Responds with a json representation of the newly added review. `designer` and `review_img_url` can be omitted."
+  },
   "GET /api/reviews/:review_id": {
     "description": "serves up a json representation of the specified review",
     "exampleResponse": {

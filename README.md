@@ -156,7 +156,7 @@ Server Response:
 
 - Implement the below when have time:
   - [x] PATCH /api/comments/:comment_id
-  - [ ] POST /api/reviews
+  - [x] POST /api/reviews
   - [ ] POST /api/categories
   - [ ] DELETE /api/reviews/:review_id
   - [ ] pagination for GET /api/reviews/:review_id/comments

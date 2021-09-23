@@ -1,5 +1,6 @@
 const db = require("../db");
 const { fetchCategories } = require("./categories.model.js");
+const format = require("pg-format");
 
 exports.fetchReviewById = async (review_id) => {
   const sqlQuery = {
@@ -144,4 +145,51 @@ exports.selectReviews = async ({
   const total_count = await getTotalCounts(category);
 
   return { reviews: result.rows, total_count: total_count };
+};
+
+function validateReview(review) {
+  const validColoumns = [
+    "owner",
+    "title",
+    "review_body",
+    "designer",
+    "category",
+    "review_img_url",
+  ];
+  const requiredColoumns = ["owner", "title", "review_body", "category"];
+
+  const allColoumnsAreValid = Object.keys(review).every((key) =>
+    validColoumns.includes(key)
+  );
+  const gotAllRequiredColoumns = requiredColoumns.every((key) => key in review);
+
+  const isValidReview = allColoumnsAreValid && gotAllRequiredColoumns;
+
+  if (!isValidReview) {
+    return Promise.reject({
+      status: 400,
+      msg: "Bad request",
+      detail: "The new review object is not valid.",
+    });
+  }
+}
+
+exports.insertReview = async (newReview) => {
+  await validateReview(newReview);
+  const columnsToInsert = Object.keys(newReview);
+
+  const sqlQuery = format(
+    `
+      INSERT INTO reviews
+        (${columnsToInsert.join(", ")})
+      VALUES
+        %L
+      RETURNING *;
+    `,
+    [columnsToInsert.map((key) => newReview[key])]
+  );
+
+  const result = await db.query(sqlQuery);
+  const new_review_id = result.rows[0].review_id;
+  return this.fetchReviewById(new_review_id);
 };

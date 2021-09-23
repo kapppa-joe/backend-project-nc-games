@@ -1,9 +1,22 @@
+const catchAndLogAllErrors = (err, req, res, next) => {
+  // for debug purpose only. disabled in normal situation.
+  console.error(err);
+  next(err);
+};
+
 const handle404Error = (req, res, next) => {
   res.status(404).send({ msg: "Not found" });
 };
 
 const handlePsql400Errors = (err, req, res, next) => {
-  const errorCodesToHandle = ["22P02", "23502", "23503", "2201X", "2201W"];
+  const errorCodesToHandle = [
+    "22P02",
+    "23502",
+    "23503",
+    "2201X",
+    "2201W",
+    "23502",
+  ];
   if (errorCodesToHandle.includes(err.code)) {
     res.status(400).send({ msg: "Bad request" });
   } else {
@@ -26,6 +39,7 @@ const handle500Errors = (err, req, res, next) => {
 };
 
 const errorHandlers = [
+  // catchAndLogError,
   handlePsql400Errors,
   handleCustomErrors,
   handle500Errors,
