@@ -4,7 +4,6 @@
   },
   "GET /api/categories": {
     "description": "serves an array of all categories",
-    "queries": [],
     "exampleResponse": {
       "categories": [
         {
@@ -16,8 +15,7 @@
   },
   "DELETE /api/comments/:comment_id": {
     "description": "delete the comment of specified id",
-    "queries": [],
-    "exampleResponse": "204 No Content"
+    "exampleResponse": "(204 No Content)"
   },
   "GET /api/reviews": {
     "description": "serves an array of all reviews",
@@ -38,7 +36,6 @@
   },
   "GET /api/reviews/:review_id": {
     "description": "serves up a json representation of the specified review",
-    "queries": [],
     "exampleResponse": {
       "review": {
         "review_id": 1,
@@ -56,12 +53,22 @@
   },
   "PATCH /api/reviews/:review_id": {
     "description": "accepts a json object `{inc_votes: num}` and increase/decrease the `votes` property of specified review. responds with the updated review",
-    "queries": [],
-    "exampleResponse": null
+    "exampleResponse": {
+      "review": {
+        "review_id": 1,
+        "title": "Culture a Love of Agriculture With Agricola",
+        "review_body": "You could sum up Agricola with the simple phrase 'Farmyeard Fun' but the mechanics and game play add so much more than that. You'll find yourself torn between breeding pigs, or sowing crops. Its joyeous and rewarding and it makes you think of time spent outside, which is much harder to do these days!",
+        "designer": "Uwe Rosenberg",
+        "review_img_url": "https://images.pexels.com/photos/4917821/pexels-photo-4917821.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
+        "votes": 11,
+        "category": "strategy",
+        "owner": "tickle122",
+        "created_at": "2021-01-18T10:00:20.514Z"
+      }
+    }
   },
   "GET /api/reviews/:review_id/comments": {
     "description": "serves up an array of comments associated with specified review_id",
-    "queries": [],
     "exampleResponse": {
       "comments": [
         {
@@ -93,12 +100,19 @@
   },
   "POST /api/reviews/:review_id/comments": {
     "description": "accepts a json object with property `username` and `body` and saves it as a new comment in database.",
-    "queries": [],
-    "exampleResponse": null
+    "exampleResponse": {
+      "comment": {
+        "comment_id": 63,
+        "author": "tickle122",
+        "review_id": 1,
+        "votes": 0,
+        "created_at": "2021-09-23T10:00:42.428Z",
+        "body": "a new comment!"
+      }
+    }
   },
   "GET /api/users": {
     "description": "serves up an array of available usernames",
-    "queries": [],
     "exampleResponse": {
       "users": [
         {
@@ -112,7 +126,6 @@
   },
   "GET /api/users/:username": {
     "description": "serves up a json representation of user data associated with given username",
-    "queries": [],
     "exampleResponse": {
       "user": {
         "username": "tickle122",
