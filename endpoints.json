@@ -14,9 +14,14 @@
       ]
     }
   },
+  "DELETE /api/comments/:comment_id": {
+    "description": "delete the comment of specified id",
+    "queries": [],
+    "exampleResponse": "204 No Content"
+  },
   "GET /api/reviews": {
     "description": "serves an array of all reviews",
-    "queries": ["category", "sort_by", "order"],
+    "queries": ["category", "sort_by", "order", "p", "limit"],
     "exampleResponse": {
       "reviews": [
         {
@@ -29,6 +34,91 @@
           "votes": 5
         }
       ]
+    }
+  },
+  "GET /api/reviews/:review_id": {
+    "description": "serves up a json representation of the specified review",
+    "queries": [],
+    "exampleResponse": {
+      "review": {
+        "review_id": 1,
+        "title": "Culture a Love of Agriculture With Agricola",
+        "review_body": "You could sum up Agricola with the simple phrase 'Farmyeard Fun' but the mechanics and game play add so much more than that. You'll find yourself torn between breeding pigs, or sowing crops. Its joyeous and rewarding and it makes you think of time spent outside, which is much harder to do these days!",
+        "designer": "Uwe Rosenberg",
+        "review_img_url": "https://images.pexels.com/photos/4917821/pexels-photo-4917821.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
+        "votes": 1,
+        "category": "strategy",
+        "owner": "tickle122",
+        "created_at": "2021-01-18T10:00:20.514Z",
+        "comment_count": 3
+      }
+    }
+  },
+  "PATCH /api/reviews/:review_id": {
+    "description": "accepts a json object `{inc_votes: num}` and increase/decrease the `votes` property of specified review. responds with the updated review",
+    "queries": [],
+    "exampleResponse": null
+  },
+  "GET /api/reviews/:review_id/comments": {
+    "description": "serves up an array of comments associated with specified review_id",
+    "queries": [],
+    "exampleResponse": {
+      "comments": [
+        {
+          "comment_id": 59,
+          "author": "jessjelly",
+          "review_id": 1,
+          "votes": 3,
+          "created_at": "2021-03-27T19:48:58.110Z",
+          "body": "Quis duis mollit ad enim deserunt."
+        },
+        {
+          "comment_id": 60,
+          "author": "cooljmessy",
+          "review_id": 1,
+          "votes": 17,
+          "created_at": "2021-03-27T14:15:38.110Z",
+          "body": "Laboris nostrud ea ex occaecat aute quis consectetur anim."
+        },
+        {
+          "comment_id": 61,
+          "author": "weegembump",
+          "review_id": 1,
+          "votes": 1,
+          "created_at": "2021-03-27T14:15:36.110Z",
+          "body": "Consequat nisi dolor nulla esse sunt eu ipsum laborum deserunt duis. Ffugiat sint et proident ex do consequat est. Nisi minim laboris mollit cupidatat?"
+        }
+      ]
+    }
+  },
+  "POST /api/reviews/:review_id/comments": {
+    "description": "accepts a json object with property `username` and `body` and saves it as a new comment in database.",
+    "queries": [],
+    "exampleResponse": null
+  },
+  "GET /api/users": {
+    "description": "serves up an array of available usernames",
+    "queries": [],
+    "exampleResponse": {
+      "users": [
+        {
+          "username": "tickle122"
+        },
+        {
+          "username": "grumpy19"
+        }
+      ]
+    }
+  },
+  "GET /api/users/:username": {
+    "description": "serves up a json representation of user data associated with given username",
+    "queries": [],
+    "exampleResponse": {
+      "user": {
+        "username": "tickle122",
+        "avatar_url": "https://www.spiritsurfers.net/monastery/wp-content/uploads/_41500270_mrtickle.jpg",
+        "name": "Tom Tickle"
+      }
     }
   }
 }

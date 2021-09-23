@@ -39,15 +39,7 @@ describe("GET /not-a-route", () => {
 describe("GET /api", () => {
   test("200: should respond with an array of available endpoints", async () => {
     const res = await request(app).get("/api").expect(200);
-    expect(res.body.endPoints.length).toBeGreaterThan(0);
-    res.body.endPoints.forEach((endPoint) => {
-      expect(endPoint).toMatchObject({
-        path: expect.any(String),
-        methods: expect.any(Array),
-        url: expect.any(String),
-      });
-      expect(endPoint.methods).toBeSubsetOf(["GET", "POST", "DELETE", "PATCH"]);
-    });
+    expect(res.body).toHaveProperty("GET /api");
   });
 });
 
