@@ -43,6 +43,50 @@ describe("GET /api", () => {
   });
 });
 
+describe("405 Method Not Allowed handler", () => {
+  test("405: responds with 'Method not allowed' when client sent a request to a valid route but the method is not supported.", async () => {
+    const testForPost = request(app).post("/api").send({}).expect(405);
+    const testForDelete = request(app).delete("/api").expect(405);
+    const testForPatch = request(app).patch("/api").send({}).expect(405);
+
+    const results = await Promise.all([
+      testForPost,
+      testForDelete,
+      testForPatch,
+    ]);
+    results.forEach((res) => {
+      expect(res.body.msg).toBe("Method not allowed");
+    });
+  });
+
+  test("405: responds correctly for routes in categories/comments/reviews/users routers", async () => {
+    const testPromises = [
+      request(app).delete("/api/categories").expect(405),
+      request(app).post("/api/comments/1").expect(405),
+      request(app).delete("/api/reviews").expect(405),
+      request(app).post("/api/reviews/1").expect(405),
+      request(app).delete("/api/reviews/1/comments").expect(405),
+      request(app).post("/api/users").expect(405),
+      request(app).post("/api/users/1").expect(405),
+    ];
+
+    const responses = await Promise.all(testPromises);
+    responses.forEach((res) => {
+      expect(res.body.msg).toBe("Method not allowed");
+    });
+  });
+
+  test("405: include an Allow header containing a list of valid methods for the route.", async () => {
+    const res1 = await request(app).post("/api").send({}).expect(405);
+    expect(res1.get("Allow")).toBe("GET");
+
+    const res2 = await request(app).patch("/api/reviews").send({}).expect(405);
+    expect(res2.get("Allow")).toBe("GET, POST");
+  });
+
+  // and an array of allowed methods
+});
+
 describe("GET /api/categories", () => {
   test("200: should respond with an array of categories", async () => {
     const res = await request(app).get("/api/categories").expect(200);

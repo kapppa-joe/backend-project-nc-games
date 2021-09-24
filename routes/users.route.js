@@ -4,7 +4,10 @@ const {
   getUserByUsername,
 } = require("../controllers/users.controller");
 
-usersRouter.get("/", getUsers);
-usersRouter.get("/:username", getUserByUsername);
+const { respondsWith405 } = require("../controllers/api.controller");
+
+usersRouter.route("/").get(getUsers).all(respondsWith405);
+
+usersRouter.route("/:username").get(getUserByUsername).all(respondsWith405);
 
 module.exports = usersRouter;

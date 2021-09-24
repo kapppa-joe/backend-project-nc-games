@@ -10,4 +10,13 @@ exports.getAllEndpoints = (req, res, next) => {
     .catch(next);
 };
 
-// exports.respondsWith405MethodNotAllow = (req, res, next) => {};
+exports.respondsWith405 = (req, res, next) => {
+  const methodsAllowed = Object.entries(req.route.methods)
+    .filter(([method, isAllowed]) => method !== "_all" && isAllowed)
+    .map(([method, isAllowed]) => method.toUpperCase());
+
+  res
+    .status(405)
+    .set("Allow", methodsAllowed) // set an `Allow` header for valid methods.
+    .send({ msg: "Method not allowed" });
+};

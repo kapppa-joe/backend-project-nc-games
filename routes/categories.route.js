@@ -2,6 +2,8 @@ const categoriesRouter = require("express").Router();
 
 const { getCategories } = require("../controllers/categories.controller.js");
 
-categoriesRouter.get("/", getCategories);
+const { respondsWith405 } = require("../controllers/api.controller");
+
+categoriesRouter.route("/").get(getCategories).all(respondsWith405);
 
 module.exports = categoriesRouter;
