@@ -1,6 +1,8 @@
 const format = require("pg-format");
 const db = require("../index.js");
 
+const { createInsertQuery } = require("../utils/data-manipulation");
+
 async function setupCategoriesTable(categoryData) {
   await db.query(`
     DROP TABLE IF EXISTS categories CASCADE;
@@ -9,18 +11,9 @@ async function setupCategoriesTable(categoryData) {
       description TEXT NOT NULL
     );
   `);
-  const result = await db.query(
-    format(
-      `
-    INSERT INTO categories 
-      (slug, description)
-    VALUES
-      %L
-    RETURNING *;
-  `,
-      categoryData.map((category) => [category.slug, category.description])
-    )
-  );
+
+  const sqlQuery = createInsertQuery("categories", categoryData);
+  const result = await db.query(sqlQuery);
   return result.rows;
 }
 
@@ -33,18 +26,8 @@ async function setupUsersTable(userData) {
       name VARCHAR(255) NOT NULL
     );
   `);
-  const result = await db.query(
-    format(
-      `
-    INSERT INTO users
-      (username, avatar_url, name)
-    VALUES
-      %L
-    RETURNING *;
-  `,
-      userData.map((user) => [user.username, user.avatar_url, user.name])
-    )
-  );
+  const sqlQuery = createInsertQuery("users", userData);
+  const result = await db.query(sqlQuery);
   return result.rows;
 }
 
@@ -68,22 +51,9 @@ async function setupReviewsTable(reviewData) {
         REFERENCES users(username)
         ON DELETE CASCADE
     );`);
-  const reviewProps = Object.keys(reviewData[0]);
-  const results = await db.query(
-    format(
-      `
-    INSERT INTO reviews
-      (${reviewProps.join(", ")})
-    VALUES
-      %L
-    RETURNING * ;
-      `,
-      reviewData.map((review) => {
-        return reviewProps.map((key) => review[key]);
-      })
-    )
-  );
-  return results.rows;
+  const sqlQuery = createInsertQuery("reviews", reviewData);
+  const result = await db.query(sqlQuery);
+  return result.rows;
 }
 
 async function setupCommentsTable(commentData) {
@@ -103,22 +73,10 @@ async function setupCommentsTable(commentData) {
           REFERENCES users(username) 
           ON DELETE CASCADE
       );`);
-  const commentProps = Object.keys(commentData[0]);
-  const results = await db.query(
-    format(
-      `
-      INSERT INTO comments
-        (${commentProps.join(", ")})
-      VALUES
-        %L
-      RETURNING * ;
-        `,
-      commentData.map((comment) => {
-        return commentProps.map((key) => comment[key]);
-      })
-    )
-  );
-  return results.rows;
+
+  const sqlQuery = createInsertQuery("comments", commentData);
+  const result = await db.query(sqlQuery);
+  return result.rows;
 }
 
 module.exports = {

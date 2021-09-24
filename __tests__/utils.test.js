@@ -1,4 +1,75 @@
 const { makeCombinations } = require("../utils");
+const {
+  mapDataToNestedArray,
+  createInsertQuery,
+} = require("../db/utils/data-manipulation");
+
+const format = require("pg-format");
+
+describe("mapDataToNestedArray", () => {
+  test("return an empty array if dataArray is empty", () => {
+    expect(mapDataToNestedArray(["a", "b"], [])).toEqual([]);
+  });
+
+  test("convert an array of objects into nested array format in the order specified in input array", () => {
+    const columns = ["a", "b"];
+    const data = [
+      { a: 1, b: 2 },
+      { a: 3, b: 4 },
+    ];
+
+    expectedOutput = [
+      [1, 2],
+      [3, 4],
+    ];
+
+    expect(mapDataToNestedArray(columns, data)).toEqual(expectedOutput);
+  });
+
+  test("do not mutate the inputs", () => {
+    const columns = ["a", "b"];
+    const columnsClone = ["a", "b"];
+    const data = [
+      { a: 1, b: 2 },
+      { a: 3, b: 4 },
+    ];
+    const dataClone = [
+      { a: 1, b: 2 },
+      { a: 3, b: 4 },
+    ];
+
+    mapDataToNestedArray(columns, data);
+
+    expect(columns).toEqual(columnsClone);
+    expect(data).toEqual(dataClone);
+  });
+});
+
+describe("createInsertQuery", () => {
+  test("return an empty string if either of the inputs are empty", () => {
+    expect(createInsertQuery("", [{ a: 1, b: true }])).toBe("");
+    expect(createInsertQuery("user", [])).toBe("");
+  });
+
+  test("return a sql query string to insert into db table", () => {
+    const tableName = "users";
+    const data = [
+      {
+        username: "mallionaire",
+        name: "haz",
+      },
+      {
+        username: "philippaclaire9",
+        name: "philippa",
+      },
+    ];
+
+    const expectedOutput =
+      "INSERT INTO users (username, name) VALUES ('mallionaire', 'haz'), ('philippaclaire9', 'philippa') RETURNING *;";
+
+    expect(createInsertQuery(tableName, data)).toBe(expectedOutput);
+  });
+});
 
 describe("makeCombinations", () => {
   test("return [[]] if given input = []", () => {
