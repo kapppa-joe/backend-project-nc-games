@@ -58,7 +58,11 @@ async function validateCategory(slug) {
   const validCategories = await fetchCategories();
   const validSlugs = validCategories.map((category) => category.slug);
   if (!validSlugs.includes(slug)) {
-    return Promise.reject({ status: 400, msg: "Bad request" });
+    return Promise.reject({
+      status: 404,
+      msg: "Not found",
+      detail: "The requested category is not found in database",
+    });
   }
 }
 

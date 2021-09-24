@@ -355,16 +355,16 @@ describe("GET /api/reviews", () => {
       expect(res.body.reviews).toHaveLength(0);
     });
 
-    test("400: respond with 'Bad request' if category is invalid", async () => {
+    test("404: respond with 'Not found' if category is invalid", async () => {
       const res = await request(app)
         .get(`/api/reviews?category=some_random_words`)
-        .expect(400);
-      expect(res.body.msg).toBe("Bad request");
+        .expect(404);
+      expect(res.body.msg).toBe("Not found");
 
       const res2 = await request(app)
         .get(`/api/reviews?sort_by=created_at&category=hello`)
-        .expect(400);
-      expect(res2.body.msg).toBe("Bad request");
+        .expect(404);
+      expect(res2.body.msg).toBe("Not found");
     });
 
     test("200: can handle sort_by, order, category at the same time and respond correctly", async () => {
