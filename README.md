@@ -24,7 +24,7 @@ By accessing the API, you can
 
 ## Dependencies
 
-- [Node JS](https://nodejs.org/) : v16.4.2
+- [Node JS](https://nodejs.org/) : v14.17.6
 - [PostgreSQL](https://www.postgresql.org/) : v.12.8
 
 #### Node JS modules:
