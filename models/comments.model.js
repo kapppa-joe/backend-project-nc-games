@@ -75,24 +75,14 @@ exports.updateCommentById = async (comment_id, inc_votes) => {
     return Promise.reject({ status: 400, msg: "Bad request" });
   }
 
-  // get the votes number before adding
-  const commentBeforeUpdate = await this.selectCommentById(comment_id);
-  if (!commentBeforeUpdate) {
-    return Promise.reject({ status: 404, msg: "comment_id not exists" });
-  }
-
-  const { votes: currentVotes } = commentBeforeUpdate;
-
-  const newVotes = currentVotes + inc_votes;
-
   const sqlQuery = {
     text: `
       UPDATE comments
-        SET votes = $1
+        SET votes = votes + $1
       WHERE comment_id = $2
       RETURNING * ;
     `,
-    values: [newVotes, comment_id],
+    values: [inc_votes, comment_id],
   };
   const result = await db.query(sqlQuery);
 

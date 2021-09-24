@@ -24,7 +24,11 @@ exports.patchReviewById = (req, res, next) => {
 
   updateReviewById(review_id, inc_votes)
     .then((review) => {
-      res.status(200).send({ review });
+      if (review) {
+        res.status(200).send({ review });
+      } else {
+        return Promise.reject({ status: 404, msg: "review_id not exists" });
+      }
     })
     .catch(next);
 };
