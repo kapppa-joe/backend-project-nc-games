@@ -12,6 +12,6 @@ apiRouter.use("/reviews", reviewsRouter);
 apiRouter.use("/comments", commentsRouter);
 apiRouter.use("/users", usersRouter);
 
-apiRouter.get("/", getAllEndpoints(apiRouter));
+apiRouter.get("/", getAllEndpoints);
 
 module.exports = apiRouter;
