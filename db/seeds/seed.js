@@ -15,11 +15,6 @@ const seed = async (data) => {
     ]);
     const reviews = await setupReviewsTable(reviewData);
     const comments = await setupCommentsTable(commentData);
-    // if (
-    // [categories, users, reviews, comments].every((table) => table.length > 0)
-    // ) {
-    // console.log("finished seeding tables.");
-    // }
   } catch (err) {
     console.error(err);
   }

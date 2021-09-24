@@ -57,10 +57,10 @@ async function setupReviewsTable(reviewData) {
       review_body text NOT NULL,
       designer VARCHAR(255),
       review_img_url VARCHAR(255) DEFAULT 'https://images.pexels.com/photos/163064/play-stone-network-networked-interactive-163064.jpeg',
-      votes INTEGER DEFAULT 0,
+      votes INTEGER NOT NULL DEFAULT 0,
       category VARCHAR(255) NOT NULL,
       owner VARCHAR(255) NOT NULL,
-      created_at TIMESTAMPTZ DEFAULT now(),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
       FOREIGN KEY (category) 
         REFERENCES categories(slug)
         ON DELETE CASCADE,
@@ -93,8 +93,8 @@ async function setupCommentsTable(commentData) {
         comment_id SERIAL PRIMARY KEY,
         author VARCHAR(255) NOT NULL, 
         review_id INT NOT NULL,
-        votes INT DEFAULT 0,
-        created_at TIMESTAMPTZ DEFAULT now(),
+        votes INT NOT NULL DEFAULT 0,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
         body text NOT NULL,
         FOREIGN KEY(review_id)
           REFERENCES reviews(review_id)
