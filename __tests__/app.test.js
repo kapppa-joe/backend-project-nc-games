@@ -860,3 +860,67 @@ describe("POST /api/reviews", () => {
     }
   });
 });
+
+describe("POST /api/categories", () => {
+  test("201: respond with new category object", async () => {
+    const testCategory = {
+      slug: "Tabletalk RPG",
+      description:
+        "A form of role-playing game (RPG) in which the participants describe their characters' actions through speech",
+    };
+
+    const res = await request(app)
+      .post("/api/categories")
+      .send(testCategory)
+      .expect(201);
+    expect(res.body.category).toMatchObject({
+      slug: "Tabletalk RPG",
+      description:
+        "A form of role-playing game (RPG) in which the participants describe their characters' actions through speech",
+    });
+
+    const result = await db.query(
+      `SELECT * FROM categories WHERE slug = '${testCategory.slug}'`
+    );
+    expect(result.rows.length === 1);
+  });
+
+  test("201: ignore unwanted property in received data", async () => {
+    const testCategory = {
+      slug: "Tabletalk RPG",
+      description:
+        "A form of role-playing game (RPG) in which the participants describe their characters' actions through speech",
+      apple: "red",
+      username: "David",
+    };
+
+    const res = await request(app)
+      .post("/api/categories")
+      .send(testCategory)
+      .expect(201);
+    expect(res.body.category).toMatchObject({
+      slug: "Tabletalk RPG",
+      description:
+        "A form of role-playing game (RPG) in which the participants describe their characters' actions through speech",
+    });
+  });
+
+  test("400: respond with 'Bad request' if either `slug` or `description` is missing", async () => {
+    const testData = [
+      {},
+      { slug: "Tabletalk RPG" },
+      {
+        description:
+          "A form of role-playing game (RPG) in which the participants describe their characters' actions through speech",
+      },
+    ];
+    const testPromises = testData.map((data) =>
+      request(app).post("/api/categories").send(data).expect(400)
+    );
+    const results = await Promise.all(testPromises);
+
+    for (const res of results) {
+      expect(res.body.msg).toBe("Bad request");
+    }
+  });
+});

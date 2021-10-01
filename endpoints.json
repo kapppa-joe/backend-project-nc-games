@@ -21,6 +21,14 @@
       ]
     }
   },
+  "POST /api/categories": {
+    "description": "accepts a json representation of a new category and save it in the db. responds with the newly created category",
+    "requiredKeysInReqBody": ["slug", "description"],
+    "exampleResponse": {
+      "slug": "Tabletalk RPG",
+      "description": "A form of role-playing game (RPG) in which the participants describe their characters' actions through speech."
+    }
+  },
   "DELETE /api/comments/:comment_id": {
     "description": "delete the comment of specified id",
     "exampleResponse": "(204 No Content)"
