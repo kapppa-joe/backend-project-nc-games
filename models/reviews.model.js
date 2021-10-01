@@ -14,7 +14,11 @@ exports.fetchReviewById = async (review_id) => {
     values: [review_id],
   };
   const result = await db.query(sqlQuery);
-  return result.rows[0];
+  if (result.rows.length === 0) {
+    return Promise.reject({ status: 404, msg: "review_id not exists" });
+  } else {
+    return result.rows[0];
+  }
 };
 
 exports.updateReviewById = async (review_id, inc_votes) => {
@@ -33,7 +37,12 @@ exports.updateReviewById = async (review_id, inc_votes) => {
   };
 
   const result = await db.query(sqlQuery);
-  return result.rows[0];
+
+  if (result.rows.length === 0) {
+    return Promise.reject({ status: 404, msg: "review_id not exists" });
+  } else {
+    return result.rows[0];
+  }
 };
 
 function isValidColumn(column) {
