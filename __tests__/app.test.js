@@ -594,13 +594,13 @@ describe("POST /api/reviews/:review_id/comments", () => {
     expect(res3.body.msg).toBe("Bad request");
   });
 
-  test("400: respond with 'Bad request' when username does not exist in database record", async () => {
+  test("404: respond with 'author username not exists' when `author`(username) does not exist in database record", async () => {
     const res = await request(app)
       .post("/api/reviews/3/comments")
       .send({ username: "no_such_user", body: "A new comment :D" })
-      .expect(400);
+      .expect(404);
 
-    expect(res.body.msg).toBe("Bad request");
+    expect(res.body.msg).toBe("author username not exists");
   });
 
   test("400: respond with 'Bad request' when review_id is not valid", async () => {
@@ -612,13 +612,13 @@ describe("POST /api/reviews/:review_id/comments", () => {
     expect(res.body.msg).toBe("Bad request");
   });
 
-  test("400: respond with 'Bad request' when review_id is valid but does not exist", async () => {
+  test("404: respond with 'review_id not exists' when review_id is valid but does not exist", async () => {
     const res = await request(app)
       .post("/api/reviews/99999/comments")
       .send({ username: "dav3rid", body: "A new comment :D" })
-      .expect(400);
+      .expect(404);
 
-    expect(res.body.msg).toBe("Bad request");
+    expect(res.body.msg).toBe("review_id not exists");
   });
 });
 
@@ -824,7 +824,7 @@ describe("POST /api/reviews", () => {
     });
   });
 
-  test("400: respond with 'Bad request' if `owner` or `category` does not match the record in db", async () => {
+  test("404: respond with 'Bad request' if `owner` or `category` does not match the record in db", async () => {
     const testReviews = [
       {
         owner: "no_such_user",
@@ -850,8 +850,13 @@ describe("POST /api/reviews", () => {
       const res = await request(app)
         .post("/api/reviews/")
         .send(review)
-        .expect(400);
-      expect(res.body.msg).toBe("Bad request");
+        .expect(404);
+      if (review.owner === "no_such_user") {
+        expect(res.body.msg).toBe("owner username not exists");
+      }
+      if (review.category === "an invalid category") {
+        expect(res.body.msg).toBe("category not exists");
+      }
     }
   });
 });
