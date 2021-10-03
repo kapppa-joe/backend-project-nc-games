@@ -158,6 +158,6 @@ Server Response:
   - [x] PATCH /api/comments/:comment_id
   - [x] POST /api/reviews
   - [x] POST /api/categories
-  - [ ] DELETE /api/reviews/:review_id
+  - [x] DELETE /api/reviews/:review_id
   - [ ] pagination for GET /api/reviews/:review_id/comments
   - [ ] ... maybe a `search` query for reviews and comments?

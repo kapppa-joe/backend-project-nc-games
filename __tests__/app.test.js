@@ -924,3 +924,28 @@ describe("POST /api/categories", () => {
     }
   });
 });
+
+describe("DELETE /api/review/review_id", () => {
+  test("204: should respond with `no content` and delete the review from db", async () => {
+    const testId = 2;
+    const res = await request(app).delete(`/api/reviews/${testId}`).expect(204);
+    expect(res.body).toEqual({});
+
+    const queryResult = await db.query(
+      `SELECT * FROM reviews WHERE review_id = '${testId}'`
+    );
+    expect(queryResult.rows.length === 0);
+  });
+
+  test('404: respond with "review_id not exists" when given a wellformed but non-exist review_id', async () => {
+    const testId = 99999;
+    const res = await request(app).delete(`/api/reviews/${testId}`).expect(404);
+    expect(res.body.msg).toBe("review_id not exists");
+  });
+
+  test('400: respond with "Bad request" when given an invalid review_id', async () => {
+    const testId = "1; DROP TABLE reviews;";
+    const res = await request(app).delete(`/api/reviews/${testId}`).expect(400);
+    expect(res.body.msg).toBe("Bad request");
+  });
+});

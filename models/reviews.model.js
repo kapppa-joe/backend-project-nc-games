@@ -198,3 +198,17 @@ exports.insertReview = async (newReview) => {
   const new_review_id = result.rows[0].review_id;
   return this.fetchReviewById(new_review_id);
 };
+
+exports.deleteReviewById = async (review_id) => {
+  const sqlQuery = {
+    text: `DELETE FROM reviews 
+           WHERE review_id = $1
+           RETURNING * ;`,
+    values: [review_id],
+  };
+
+  const result = await db.query(sqlQuery);
+  if (result.rows.length === 0) {
+    return Promise.reject({ status: 404, msg: "review_id not exists" });
+  }
+};

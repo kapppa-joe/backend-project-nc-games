@@ -1,8 +1,9 @@
 const {
-  fetchReviewById,
-  updateReviewById,
   selectReviews,
   insertReview,
+  fetchReviewById,
+  updateReviewById,
+  deleteReviewById,
 } = require("../models/reviews.model.js");
 
 exports.getReviewById = (req, res, next) => {
@@ -40,6 +41,15 @@ exports.postReview = (req, res, next) => {
   insertReview(newReview)
     .then((review) => {
       res.status(201).send({ review });
+    })
+    .catch(next);
+};
+
+exports.removeReviewById = (req, res, next) => {
+  const { review_id } = req.params;
+  deleteReviewById(review_id)
+    .then(() => {
+      res.sendStatus(204);
     })
     .catch(next);
 };

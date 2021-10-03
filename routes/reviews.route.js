@@ -1,9 +1,10 @@
 const reviewsRouter = require("express").Router();
 const {
-  getReviewById,
-  patchReviewById,
   getReviews,
   postReview,
+  getReviewById,
+  patchReviewById,
+  removeReviewById,
 } = require("../controllers/reviews.controller.js");
 
 const {
@@ -19,6 +20,7 @@ reviewsRouter
   .route("/:review_id")
   .get(getReviewById)
   .patch(patchReviewById)
+  .delete(removeReviewById)
   .all(respondsWith405);
 
 reviewsRouter
