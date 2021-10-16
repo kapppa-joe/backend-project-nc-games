@@ -101,124 +101,67 @@ describe("GET /api/categories", () => {
   });
 });
 
-describe("GET /api/reviews/:review_id", () => {
-  test("200: should respond with an review object", async () => {
-    for (let testId = 1; testId <= 13; testId++) {
-      const res = await request(app).get(`/api/reviews/${testId}`).expect(200);
-
-      expect(res.body).toHaveProperty("review");
-      const { review } = res.body;
-
-      expect(review).toMatchObject({
-        owner: expect.any(String),
-        title: expect.any(String),
-        review_id: testId,
-        review_body: expect.any(String),
-        designer: expect.any(String),
-        review_img_url: expect.any(String),
-        category: expect.any(String),
-        created_at: expect.any(String),
-        votes: expect.any(Number),
-        comment_count: expect.any(Number),
-      });
-
-      expect(new Date(review.created_at).toString()).not.toBe("Invalid Date");
-    }
-  });
-
-  test('404: respond with msg "review_id not exists" when review_id is wellformed but does not exist', async () => {
-    const testId = 99999;
-    const res = await request(app).get(`/api/reviews/${testId}`).expect(404);
-    expect(res.body.msg).toBe("review_id not exists");
-  });
-
-  test('400: respond with msg "Bad request" when review_id is not valid', async () => {
-    const testId = "1 ; DROP TABLE reviews;"; // SQL injection!
-    const res = await request(app).get(`/api/reviews/${testId}`).expect(400);
-    expect(res.body.msg).toBe("Bad request");
-  });
-});
-
-describe("PATCH /api/reviews/:review_id", () => {
-  test("200: accept object with inc_votes property and respond with patched review object", async () => {
-    const testId = 2;
-    const votesBeforePatch = 5;
-    const inc_votes = 3;
+describe("POST /api/categories", () => {
+  test("201: respond with new category object", async () => {
+    const testCategory = {
+      slug: "Tabletalk RPG",
+      description:
+        "A form of role-playing game (RPG) in which the participants describe their characters' actions through speech",
+    };
 
     const res = await request(app)
-      .patch(`/api/reviews/${testId}`)
-      .send({ inc_votes })
-      .expect(200);
-    expect(res.body).toHaveProperty("review");
-
-    expect(res.body.review).toMatchObject({
-      review_id: testId,
-      votes: votesBeforePatch + inc_votes,
+      .post("/api/categories")
+      .send(testCategory)
+      .expect(201);
+    expect(res.body.category).toMatchObject({
+      slug: "Tabletalk RPG",
+      description:
+        "A form of role-playing game (RPG) in which the participants describe their characters' actions through speech",
     });
 
-    // verify that votes in db is updated
-    const queryResult = await db.query(
-      `SELECT votes FROM reviews WHERE review_id = 2`
+    const result = await db.query(
+      `SELECT * FROM categories WHERE slug = '${testCategory.slug}'`
     );
-    expect((queryResult.rows[0].votes = votesBeforePatch + inc_votes));
+    expect(result.rows.length === 1);
   });
 
-  test("200: passing a negative inc_votes can decrease votes", async () => {
-    const testId = 2;
-    const votesBeforePatch = 5;
-    const inc_votes = -10;
+  test("201: ignore unwanted property in received data", async () => {
+    const testCategory = {
+      slug: "Tabletalk RPG",
+      description:
+        "A form of role-playing game (RPG) in which the participants describe their characters' actions through speech",
+      apple: "red",
+      username: "David",
+    };
 
     const res = await request(app)
-      .patch(`/api/reviews/${testId}`)
-      .send({ inc_votes })
-      .expect(200);
-    expect(res.body.review.votes).toBe(votesBeforePatch + inc_votes);
+      .post("/api/categories")
+      .send(testCategory)
+      .expect(201);
+    expect(res.body.category).toMatchObject({
+      slug: "Tabletalk RPG",
+      description:
+        "A form of role-playing game (RPG) in which the participants describe their characters' actions through speech",
+    });
   });
 
-  test("200: should only handle inc_votes and ignore other irrelevent properties", async () => {
-    const testId = 1;
-    const votesBeforePatch = 1;
-    const inc_votes = 6;
+  test("400: respond with 'Bad request' if either `slug` or `description` is missing", async () => {
+    const testData = [
+      {},
+      { slug: "Tabletalk RPG" },
+      {
+        description:
+          "A form of role-playing game (RPG) in which the participants describe their characters' actions through speech",
+      },
+    ];
+    const testPromises = testData.map((data) =>
+      request(app).post("/api/categories").send(data).expect(400)
+    );
+    const results = await Promise.all(testPromises);
 
-    const res = await request(app)
-      .patch(`/api/reviews/${testId}`)
-      .send({
-        inc_votes,
-        category: "dexterity",
-        username: "Paul",
-        jaffa_cakes_are_biscuits: true,
-      })
-      .expect(200);
-    expect(res.body.review.votes).toBe(votesBeforePatch + inc_votes);
-  });
-
-  test("400: respond with 'Bad request' if value of inc_vote is invalid", async () => {
-    const res = await request(app)
-      .patch("/api/reviews/2")
-      .send({ inc_votes: "some_invalid_things" })
-      .expect(400);
-    expect(res.body.msg).toBe("Bad request");
-  });
-
-  test("400: respond with 'Bad request' if inc_votes is not provided", async () => {
-    const res = await request(app).patch("/api/reviews/2").send({}).expect(400);
-    expect(res.body.msg).toBe("Bad request");
-  });
-
-  test("400: respond with 'Bad request' if review_id is invalid", async () => {
-    const res = await request(app)
-      .patch("/api/reviews/some_invalid_id")
-      .send({ inc_votes: 3 })
-      .expect(400);
-    expect(res.body.msg).toBe("Bad request");
-  });
-
-  test("404: respond with 'review_id not exists' if review_id does not exists", async () => {
-    const res = await request(app)
-      .patch("/api/reviews/9999")
-      .send({ inc_votes: 3 })
-      .expect(404);
-    expect(res.body.msg).toBe("review_id not exists");
+    for (const res of results) {
+      expect(res.body.msg).toBe("Bad request");
+    }
   });
 });
 
@@ -485,6 +428,293 @@ describe("GET /api/reviews", () => {
   });
 });
 
+describe("POST /api/reviews", () => {
+  test("201: accept a new review and respond with review object", async () => {
+    const testReview = {
+      owner: "bainesface",
+      title: "A new review",
+      designer: "Lawson Kautzer",
+      category: "children's games",
+      review_body: "This game is sooo funny!",
+    };
+
+    const startOfRequest = new Date();
+    const res = await request(app)
+      .post("/api/reviews")
+      .send(testReview)
+      .expect(201);
+    const endOfRequest = new Date();
+
+    expect(res.body.review).toMatchObject({
+      review_id: 14,
+      created_at: expect.any(String),
+      votes: 0,
+      comment_count: 0,
+      ...testReview,
+    });
+
+    // check the create_at timestamp to be generated correctly
+    const timeStampOfNewReview = new Date(res.body.review.created_at);
+    expect(timeStampOfNewReview > startOfRequest).toBe(true);
+    expect(timeStampOfNewReview < endOfRequest).toBe(true);
+  });
+
+  test("400: respond with 'Bad request' if req body is empty", async () => {
+    const res = await request(app).post("/api/reviews").send("").expect(400);
+    expect(res.body.msg).toBe("Bad request");
+  });
+
+  test("400: respond with 'Bad request' if any of the columns `owner`, `review_body` or `category` are missing", async () => {
+    const testReviews = [
+      {
+        // owner missing
+        title: "A new review",
+        review_body: "This game is sooooooooo funny!",
+        designer: "Lawson Kautzer",
+        category: "children's games",
+        review_img_url:
+          "https://cdn.pixabay.com/photo/2019/07/30/05/53/dog-4372036_1280.jpg",
+      },
+      {
+        owner: "bainesface",
+        title: "A new review",
+        // review_body missing
+        designer: "Lawson Kautzer",
+        category: "children's games",
+        review_img_url:
+          "https://cdn.pixabay.com/photo/2019/07/30/05/53/dog-4372036_1280.jpg",
+      },
+      {
+        owner: "bainesface",
+        title: "A new review",
+        review_body: "This game is sooooooooo funny!",
+        designer: "Lawson Kautzer",
+        // category missing
+        review_img_url:
+          "https://cdn.pixabay.com/photo/2019/07/30/05/53/dog-4372036_1280.jpg",
+      },
+    ];
+
+    const testPromises = testReviews.map((review) =>
+      request(app).post("/api/reviews").send(review).expect(400)
+    );
+    const results = await Promise.all(testPromises);
+
+    results.forEach((res) => {
+      expect(res.body.msg).toBe("Bad request");
+    });
+  });
+
+  test("404: respond with 'Bad request' if `owner` or `category` does not match the record in db", async () => {
+    const testReviews = [
+      {
+        owner: "no_such_user",
+        title: "A new review",
+        review_body: "This game is sooooooooo funny!",
+        designer: "Lawson Kautzer",
+        category: "children's games",
+        review_img_url:
+          "https://cdn.pixabay.com/photo/2019/07/30/05/53/dog-4372036_1280.jpg",
+      },
+      {
+        owner: "bainesface",
+        title: "A new review",
+        review_body: "This game is sooooooooo funny!",
+        designer: "Lawson Kautzer",
+        category: "an invalid category",
+        review_img_url:
+          "https://cdn.pixabay.com/photo/2019/07/30/05/53/dog-4372036_1280.jpg",
+      },
+    ];
+
+    for (const review of testReviews) {
+      const res = await request(app)
+        .post("/api/reviews/")
+        .send(review)
+        .expect(404);
+      if (review.owner === "no_such_user") {
+        expect(res.body.msg).toBe("owner username not exists");
+      }
+      if (review.category === "an invalid category") {
+        expect(res.body.msg).toBe("category not exists");
+      }
+    }
+  });
+});
+
+describe("GET /api/reviews/:review_id", () => {
+  test("200: should respond with an review object", async () => {
+    for (let testId = 1; testId <= 13; testId++) {
+      const res = await request(app).get(`/api/reviews/${testId}`).expect(200);
+
+      expect(res.body).toHaveProperty("review");
+      const { review } = res.body;
+
+      expect(review).toMatchObject({
+        owner: expect.any(String),
+        title: expect.any(String),
+        review_id: testId,
+        review_body: expect.any(String),
+        designer: expect.any(String),
+        review_img_url: expect.any(String),
+        category: expect.any(String),
+        created_at: expect.any(String),
+        votes: expect.any(Number),
+        comment_count: expect.any(Number),
+      });
+
+      expect(new Date(review.created_at).toString()).not.toBe("Invalid Date");
+    }
+  });
+
+  test('404: respond with msg "review_id not exists" when review_id is wellformed but does not exist', async () => {
+    const testId = 99999;
+    const res = await request(app).get(`/api/reviews/${testId}`).expect(404);
+    expect(res.body.msg).toBe("review_id not exists");
+  });
+
+  test('400: respond with msg "Bad request" when review_id is not valid', async () => {
+    const testId = "1 ; DROP TABLE reviews;"; // SQL injection!
+    const res = await request(app).get(`/api/reviews/${testId}`).expect(400);
+    expect(res.body.msg).toBe("Bad request");
+  });
+});
+
+describe("DELETE /api/review/review_id", () => {
+  test("204: should respond with `no content` and delete the review from db", async () => {
+    const testId = 2;
+    const res = await request(app).delete(`/api/reviews/${testId}`).expect(204);
+    expect(res.body).toEqual({});
+
+    const queryResult = await db.query(
+      `SELECT * FROM reviews WHERE review_id = '${testId}'`
+    );
+    expect(queryResult.rows.length === 0);
+  });
+
+  test('404: respond with "review_id not exists" when given a wellformed but non-exist review_id', async () => {
+    const testId = 99999;
+    const res = await request(app).delete(`/api/reviews/${testId}`).expect(404);
+    expect(res.body.msg).toBe("review_id not exists");
+  });
+
+  test('400: respond with "Bad request" when given an invalid review_id', async () => {
+    const testId = "1; DROP TABLE reviews;";
+    const res = await request(app).delete(`/api/reviews/${testId}`).expect(400);
+    expect(res.body.msg).toBe("Bad request");
+  });
+});
+
+describe("PATCH /api/reviews/:review_id", () => {
+  test("200: accept object with inc_votes property and respond with patched review object", async () => {
+    const testId = 2;
+    const votesBeforePatch = 5;
+    const inc_votes = 3;
+
+    const res = await request(app)
+      .patch(`/api/reviews/${testId}`)
+      .send({ inc_votes })
+      .expect(200);
+    expect(res.body).toHaveProperty("review");
+
+    expect(res.body.review).toMatchObject({
+      review_id: testId,
+      votes: votesBeforePatch + inc_votes,
+    });
+
+    // verify that votes in db is updated
+    const queryResult = await db.query(
+      `SELECT votes FROM reviews WHERE review_id = 2`
+    );
+    expect((queryResult.rows[0].votes = votesBeforePatch + inc_votes));
+  });
+
+  test("200: passing a negative inc_votes can decrease votes", async () => {
+    const testId = 2;
+    const votesBeforePatch = 5;
+    const inc_votes = -10;
+
+    const res = await request(app)
+      .patch(`/api/reviews/${testId}`)
+      .send({ inc_votes })
+      .expect(200);
+    expect(res.body.review.votes).toBe(votesBeforePatch + inc_votes);
+  });
+
+  test("200: passing a `review_body` prop and `username` prop allows amending review body", async () => {
+    const testId = 2;
+    const newReviewBody = "Edited just now :D";
+    const testUsername = "philippaclaire9";
+
+    const res = await request(app)
+      .patch(`/api/reviews/${testId}`)
+      .send({ review_body: newReviewBody, username: testUsername })
+      .expect(200);
+    expect(res.body.review).toMatchObject({
+      review_id: testId,
+      review_body: newReviewBody,
+      owner: testUsername,
+    });
+  });
+
+  test("200: should only handle inc_votes and ignore other irrelevent properties", async () => {
+    const testId = 1;
+    const votesBeforePatch = 1;
+    const inc_votes = 6;
+
+    const res = await request(app)
+      .patch(`/api/reviews/${testId}`)
+      .send({
+        inc_votes,
+        category: "dexterity",
+        username: "Paul",
+        jaffa_cakes_are_biscuits: true,
+      })
+      .expect(200);
+    expect(res.body.review.votes).toBe(votesBeforePatch + inc_votes);
+  });
+
+  test("400: respond with 'Bad request' if value of inc_vote is invalid", async () => {
+    const res = await request(app)
+      .patch("/api/reviews/2")
+      .send({ inc_votes: "some_invalid_things" })
+      .expect(400);
+    expect(res.body.msg).toBe("Bad request");
+  });
+
+  test("400: respond with 'Bad request' if inc_votes is not provided", async () => {
+    const res = await request(app).patch("/api/reviews/2").send({}).expect(400);
+    expect(res.body.msg).toBe("Bad request");
+  });
+
+  test("400: respond with 'Bad request' if review_id is invalid", async () => {
+    const res = await request(app)
+      .patch("/api/reviews/some_invalid_id")
+      .send({ inc_votes: 3 })
+      .expect(400);
+    expect(res.body.msg).toBe("Bad request");
+  });
+
+  test("404: respond with 'review_id not exists' if review_id does not exists", async () => {
+    const res = await request(app)
+      .patch("/api/reviews/9999")
+      .send({ inc_votes: 3 })
+      .expect(404);
+    expect(res.body.msg).toBe("review_id not exists");
+  });
+
+  test("404: respond with 404 error if requested to update review_body but username not matching review owner", async () => {
+    const testId = 2;
+    const newReviewBody = "Edited just now :D";
+    const testUsername = "no_such_user";
+
+    const res = await request(app)
+      .patch(`/api/reviews/${testId}`)
+      .send({ review_body: newReviewBody, username: testUsername })
+      .expect(404);
+  });
+});
+
 describe("GET /api/reviews/:review_id/comments", () => {
   test("200: respond with comments of given review_id", async () => {
     const testId = 2;
@@ -654,41 +884,6 @@ describe("DELETE /api/comments/:comment_id", () => {
   });
 });
 
-describe("GET /api/users", () => {
-  test("200: respond with an array of usernames", async () => {
-    const res = await request(app).get("/api/users").expect(200);
-    expect(res.body.users).toHaveLength(4); // test data has 4 users
-    res.body.users.forEach((user) => {
-      expect(user).toEqual({
-        username: expect.any(String),
-      });
-    });
-  });
-});
-
-describe("GET /api/users/:username", () => {
-  test("200: respond with a user object", async () => {
-    const testUsername = "bainesface";
-    const res = await request(app)
-      .get(`/api/users/${testUsername}`)
-      .expect(200);
-
-    expect(res.body.user).toEqual({
-      username: testUsername,
-      name: expect.any(String),
-      avatar_url: expect.any(String),
-    });
-  });
-
-  test("404: respond with 'username not exists' when given an invalid username", async () => {
-    const testUsername = `nobody OR 1=1`;
-    const res = await request(app)
-      .get(`/api/users/${testUsername}`)
-      .expect(404);
-    expect(res.body.msg).toBe("username not exists");
-  });
-});
-
 describe("PATCH /api/comments/:comment_id", () => {
   test("200: accept object with inc_votes property and respond with patched review object", async () => {
     const testId = 2;
@@ -747,205 +942,37 @@ describe("PATCH /api/comments/:comment_id", () => {
   });
 });
 
-describe("POST /api/reviews", () => {
-  test("201: accept a new review and respond with review object", async () => {
-    const testReview = {
-      owner: "bainesface",
-      title: "A new review",
-      designer: "Lawson Kautzer",
-      category: "children's games",
-      review_body: "This game is sooo funny!",
-    };
-
-    const startOfRequest = new Date();
-    const res = await request(app)
-      .post("/api/reviews")
-      .send(testReview)
-      .expect(201);
-    const endOfRequest = new Date();
-
-    expect(res.body.review).toMatchObject({
-      review_id: 14,
-      created_at: expect.any(String),
-      votes: 0,
-      comment_count: 0,
-      ...testReview,
+describe("GET /api/users", () => {
+  test("200: respond with an array of usernames", async () => {
+    const res = await request(app).get("/api/users").expect(200);
+    expect(res.body.users).toHaveLength(4); // test data has 4 users
+    res.body.users.forEach((user) => {
+      expect(user).toEqual({
+        username: expect.any(String),
+      });
     });
-
-    // check the create_at timestamp to be generated correctly
-    const timeStampOfNewReview = new Date(res.body.review.created_at);
-    expect(timeStampOfNewReview > startOfRequest).toBe(true);
-    expect(timeStampOfNewReview < endOfRequest).toBe(true);
-  });
-
-  test("400: respond with 'Bad request' if req body is empty", async () => {
-    const res = await request(app).post("/api/reviews").send("").expect(400);
-    expect(res.body.msg).toBe("Bad request");
-  });
-
-  test("400: respond with 'Bad request' if any of the columns `owner`, `review_body` or `category` are missing", async () => {
-    const testReviews = [
-      {
-        // owner missing
-        title: "A new review",
-        review_body: "This game is sooooooooo funny!",
-        designer: "Lawson Kautzer",
-        category: "children's games",
-        review_img_url:
-          "https://cdn.pixabay.com/photo/2019/07/30/05/53/dog-4372036_1280.jpg",
-      },
-      {
-        owner: "bainesface",
-        title: "A new review",
-        // review_body missing
-        designer: "Lawson Kautzer",
-        category: "children's games",
-        review_img_url:
-          "https://cdn.pixabay.com/photo/2019/07/30/05/53/dog-4372036_1280.jpg",
-      },
-      {
-        owner: "bainesface",
-        title: "A new review",
-        review_body: "This game is sooooooooo funny!",
-        designer: "Lawson Kautzer",
-        // category missing
-        review_img_url:
-          "https://cdn.pixabay.com/photo/2019/07/30/05/53/dog-4372036_1280.jpg",
-      },
-    ];
-
-    const testPromises = testReviews.map((review) =>
-      request(app).post("/api/reviews").send(review).expect(400)
-    );
-    const results = await Promise.all(testPromises);
-
-    results.forEach((res) => {
-      expect(res.body.msg).toBe("Bad request");
-    });
-  });
-
-  test("404: respond with 'Bad request' if `owner` or `category` does not match the record in db", async () => {
-    const testReviews = [
-      {
-        owner: "no_such_user",
-        title: "A new review",
-        review_body: "This game is sooooooooo funny!",
-        designer: "Lawson Kautzer",
-        category: "children's games",
-        review_img_url:
-          "https://cdn.pixabay.com/photo/2019/07/30/05/53/dog-4372036_1280.jpg",
-      },
-      {
-        owner: "bainesface",
-        title: "A new review",
-        review_body: "This game is sooooooooo funny!",
-        designer: "Lawson Kautzer",
-        category: "an invalid category",
-        review_img_url:
-          "https://cdn.pixabay.com/photo/2019/07/30/05/53/dog-4372036_1280.jpg",
-      },
-    ];
-
-    for (const review of testReviews) {
-      const res = await request(app)
-        .post("/api/reviews/")
-        .send(review)
-        .expect(404);
-      if (review.owner === "no_such_user") {
-        expect(res.body.msg).toBe("owner username not exists");
-      }
-      if (review.category === "an invalid category") {
-        expect(res.body.msg).toBe("category not exists");
-      }
-    }
   });
 });
 
-describe("POST /api/categories", () => {
-  test("201: respond with new category object", async () => {
-    const testCategory = {
-      slug: "Tabletalk RPG",
-      description:
-        "A form of role-playing game (RPG) in which the participants describe their characters' actions through speech",
-    };
-
+describe("GET /api/users/:username", () => {
+  test("200: respond with a user object", async () => {
+    const testUsername = "bainesface";
     const res = await request(app)
-      .post("/api/categories")
-      .send(testCategory)
-      .expect(201);
-    expect(res.body.category).toMatchObject({
-      slug: "Tabletalk RPG",
-      description:
-        "A form of role-playing game (RPG) in which the participants describe their characters' actions through speech",
-    });
+      .get(`/api/users/${testUsername}`)
+      .expect(200);
 
-    const result = await db.query(
-      `SELECT * FROM categories WHERE slug = '${testCategory.slug}'`
-    );
-    expect(result.rows.length === 1);
-  });
-
-  test("201: ignore unwanted property in received data", async () => {
-    const testCategory = {
-      slug: "Tabletalk RPG",
-      description:
-        "A form of role-playing game (RPG) in which the participants describe their characters' actions through speech",
-      apple: "red",
-      username: "David",
-    };
-
-    const res = await request(app)
-      .post("/api/categories")
-      .send(testCategory)
-      .expect(201);
-    expect(res.body.category).toMatchObject({
-      slug: "Tabletalk RPG",
-      description:
-        "A form of role-playing game (RPG) in which the participants describe their characters' actions through speech",
+    expect(res.body.user).toEqual({
+      username: testUsername,
+      name: expect.any(String),
+      avatar_url: expect.any(String),
     });
   });
 
-  test("400: respond with 'Bad request' if either `slug` or `description` is missing", async () => {
-    const testData = [
-      {},
-      { slug: "Tabletalk RPG" },
-      {
-        description:
-          "A form of role-playing game (RPG) in which the participants describe their characters' actions through speech",
-      },
-    ];
-    const testPromises = testData.map((data) =>
-      request(app).post("/api/categories").send(data).expect(400)
-    );
-    const results = await Promise.all(testPromises);
-
-    for (const res of results) {
-      expect(res.body.msg).toBe("Bad request");
-    }
-  });
-});
-
-describe("DELETE /api/review/review_id", () => {
-  test("204: should respond with `no content` and delete the review from db", async () => {
-    const testId = 2;
-    const res = await request(app).delete(`/api/reviews/${testId}`).expect(204);
-    expect(res.body).toEqual({});
-
-    const queryResult = await db.query(
-      `SELECT * FROM reviews WHERE review_id = '${testId}'`
-    );
-    expect(queryResult.rows.length === 0);
-  });
-
-  test('404: respond with "review_id not exists" when given a wellformed but non-exist review_id', async () => {
-    const testId = 99999;
-    const res = await request(app).delete(`/api/reviews/${testId}`).expect(404);
-    expect(res.body.msg).toBe("review_id not exists");
-  });
-
-  test('400: respond with "Bad request" when given an invalid review_id', async () => {
-    const testId = "1; DROP TABLE reviews;";
-    const res = await request(app).delete(`/api/reviews/${testId}`).expect(400);
-    expect(res.body.msg).toBe("Bad request");
+  test("404: respond with 'username not exists' when given an invalid username", async () => {
+    const testUsername = `nobody OR 1=1`;
+    const res = await request(app)
+      .get(`/api/users/${testUsername}`)
+      .expect(404);
+    expect(res.body.msg).toBe("username not exists");
   });
 });

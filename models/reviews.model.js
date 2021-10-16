@@ -21,7 +21,51 @@ exports.fetchReviewById = async (review_id) => {
   }
 };
 
-exports.updateReviewById = async (review_id, inc_votes) => {
+exports.updateReviewById = async (
+  review_id,
+  { inc_votes, username, review_body }
+) => {
+  if (inc_votes && review_body) {
+    return Promise.reject({
+      status: 400,
+      msg: "Bad request",
+      details:
+        "`inc_votes` and `review_body` cannot be handled in the same request.",
+    });
+  } else if (inc_votes) {
+    return updateReviewVotesById(review_id, inc_votes);
+  } else if (review_body) {
+    return updateReviewBody(review_id, username, review_body);
+  } else {
+    return Promise.reject({
+      status: 400,
+      msg: "Bad request",
+      details:
+        "property `inc_votes` or `review_body` not found in request body.",
+    });
+  }
+};
+
+async function updateReviewBody(review_id, username, review_body) {
+  const sqlQuery = {
+    text: `UPDATE reviews
+           SET review_body = $1
+           WHERE review_id = $2 AND owner = $3
+           RETURNING *;`,
+    values: [review_body, review_id, username],
+  };
+  const result = await db.query(sqlQuery);
+  if (result.rows.length === 0) {
+    return Promise.reject({
+      status: 404,
+      msg: "review_id not exists or username not matching review author.",
+    });
+  } else {
+    return result.rows[0];
+  }
+}
+
+async function updateReviewVotesById(review_id, inc_votes) {
   if (isNaN(parseInt(inc_votes))) {
     return Promise.reject({ status: 400, msg: "Bad request" });
   }
@@ -43,7 +87,7 @@ exports.updateReviewById = async (review_id, inc_votes) => {
   } else {
     return result.rows[0];
   }
-};
+}
 
 function isValidColumn(column) {
   const validColumns = [
