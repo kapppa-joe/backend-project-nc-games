@@ -22,8 +22,8 @@
     }
   },
   "POST /api/categories": {
-    "description": "accepts a json representation of a new category and save it in the db. responds with the newly created category",
-    "requiredKeysInReqBody": ["slug", "description"],
+    "description": "create a new category with the data in request body. responds with the newly created category",
+    "requiredKeys": ["slug", "description"],
     "exampleResponse": {
       "slug": "Tabletalk RPG",
       "description": "A form of role-playing game (RPG) in which the participants describe their characters' actions through speech."
@@ -34,8 +34,11 @@
     "exampleResponse": "(204 No Content)"
   },
   "PATCH /api/comments/:comment_id": {
-    "description": "accepts a json object `{inc_votes: num}` and increase/decrease the `votes` property of specified review. responds with the updated comment",
-    "requiredKeysInReqBody": ["inc_votes"],
+    "description": "update the comment with keys from the request body",
+    "accept_keys": [
+      { "inc_votes": "number - increase the votes of comment" },
+      { "body": "string" }
+    ],
     "exampleResponse": {
       "comment": {
         "comment_id": 1,
@@ -66,8 +69,8 @@
   },
   "POST /api/reviews": {
     "description": "accepts a new review in json format and store it in database. Responds with a json representation of the newly added review.",
-    "requiredKeysInReqBody": ["owner", "title", "review_body", "category"],
-    "optionalKeysInReqBody": ["designer", "review_img_url"],
+    "requiredKeys": ["owner", "title", "review_body", "category"],
+    "optionalKeys": ["designer", "review_img_url"],
     "exampleResponse": {
       "review": {
         "review_id": 26,
@@ -111,8 +114,11 @@
     }
   },
   "PATCH /api/reviews/:review_id": {
-    "description": "accepts a json object `{inc_votes: num}` and increase/decrease the `votes` property of specified review. responds with the updated review",
-    "requiredKeysInReqBody": ["inc_votes"],
+    "description": "update a review with data from the request body.",
+    "acceptKeys": [
+      { "inc_votes": "number - increase the votes of comment" },
+      { "review_body": "string" }
+    ],
     "exampleResponse": {
       "review": {
         "review_id": 1,
@@ -126,6 +132,11 @@
         "created_at": "2021-01-18T10:00:20.514Z"
       }
     }
+  },
+  "DELETE /api/reviews/:review_id": {
+    "description": "",
+    "queries": [],
+    "exampleResponse": null
   },
   "GET /api/reviews/:review_id/comments": {
     "description": "serves up an array of comments associated with specified review_id",
@@ -159,8 +170,8 @@
     }
   },
   "POST /api/reviews/:review_id/comments": {
-    "description": "accepts a new comment in json format and store it in database. Responds with the newly added comment object.",
-    "requiredKeysInReqBody": ["username", "body"],
+    "description": "Create a new comment to the review with data from request body. Responds with the newly added comment object.",
+    "requiredKeys": ["username", "body"],
     "exampleResponse": {
       "comment": {
         "comment_id": 63,
