@@ -885,7 +885,7 @@ describe("DELETE /api/comments/:comment_id", () => {
 });
 
 describe("PATCH /api/comments/:comment_id", () => {
-  test("200: accept object with inc_votes property and respond with patched review object", async () => {
+  test("200: accept object with inc_votes property and respond with patched comment object", async () => {
     const testId = 2;
     const votesBeforePatch = 13;
     const inc_votes = 6;
@@ -906,6 +906,20 @@ describe("PATCH /api/comments/:comment_id", () => {
       `SELECT votes FROM comments WHERE comment_id = ${testId}`
     );
     expect((queryResult.rows[0].votes = votesBeforePatch + inc_votes));
+  });
+
+  test("200: accept object with `body` property and respond with patched comment object", async () => {
+    const testId = 2;
+    const newCommentBody = "revise my comment!";
+    const res = await request(app)
+      .patch(`/api/comments/${testId}`)
+      .send({ body: newCommentBody })
+      .expect(200);
+
+    expect(res.body.comment).toMatchObject({
+      comment_id: testId,
+      body: newCommentBody,
+    });
   });
 
   test("400: respond with 'Bad request' if the req body is invalid or empty", async () => {

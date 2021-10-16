@@ -39,8 +39,8 @@ exports.removeCommentById = (req, res, next) => {
 
 exports.patchCommentById = (req, res, next) => {
   const { comment_id } = req.params;
-  const { inc_votes } = req.body;
-  updateCommentById(comment_id, inc_votes)
+  const { inc_votes, body } = req.body;
+  updateCommentById(comment_id, { inc_votes, body })
     .then((comment) => {
       if (comment) {
         res.status(200).send({ comment });
