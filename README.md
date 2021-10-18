@@ -160,4 +160,4 @@ Server Response:
   - [x] POST /api/categories
   - [x] DELETE /api/reviews/:review_id
   - [ ] pagination for GET /api/reviews/:review_id/comments
-  - [ ] ... maybe a `search` query for reviews and comments?
+  - [o] ... maybe a `search` query for reviews and comments? (18/Oct implemented `search` query for reviews)

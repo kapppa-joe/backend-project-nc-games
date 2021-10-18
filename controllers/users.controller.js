@@ -1,4 +1,8 @@
-const { selectUsers, selectUserByUsername } = require("../models/users.model");
+const {
+  selectUsers,
+  selectUserByUsername,
+  insertUser,
+} = require("../models/users.model");
 
 exports.getUsers = (req, res, next) => {
   selectUsers()
@@ -12,11 +16,16 @@ exports.getUserByUsername = (req, res, next) => {
   const { username } = req.params;
   selectUserByUsername(username)
     .then((user) => {
-      if (user) {
-        res.status(200).send({ user });
-      } else {
-        return Promise.reject({ status: 404, msg: "username not exists" });
-      }
+      res.status(200).send({ user });
+    })
+    .catch(next);
+};
+
+exports.postUser = (req, res, next) => {
+  const newUser = req.body;
+  insertUser(newUser)
+    .then((user) => {
+      res.status(201).send({ user });
     })
     .catch(next);
 };

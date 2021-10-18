@@ -66,7 +66,7 @@ describe("405 Method Not Allowed handler", () => {
       request(app).delete("/api/reviews").expect(405),
       request(app).post("/api/reviews/1").expect(405),
       request(app).delete("/api/reviews/1/comments").expect(405),
-      request(app).post("/api/users").expect(405),
+      request(app).delete("/api/users").expect(405),
       request(app).post("/api/users/1").expect(405),
     ];
 
@@ -996,6 +996,37 @@ describe("GET /api/users", () => {
         username: expect.any(String),
       });
     });
+  });
+});
+
+describe("POST /api/users", () => {
+  test("200: responds with new user", async () => {
+    const newUser = {
+      username: "puppylover",
+      name: "bowbow",
+      avatar_url: "https://place-puppy.com/250x250",
+    };
+
+    const res = await request(app).post("/api/users").send(newUser).expect(201);
+    expect(res.body.user).toMatchObject(newUser);
+
+    const result = await db.query(
+      `SELECT * FROM users WHERE username = 'puppylover';`
+    );
+    expect(result.rows).toHaveLength(1);
+  });
+
+  test("400: responds with 'Bad request' if `name` or `username` is missing ", async () => {
+    const testuser1 = { username: "puppylover" };
+    const testuser2 = { name: "bowbow" };
+
+    for (const testuser of [testuser1, testuser2]) {
+      const res = await request(app)
+        .post(`/api/users`)
+        .send(testuser)
+        .expect(400);
+      expect(res.body.msg).toBe("Bad request");
+    }
   });
 });
 
