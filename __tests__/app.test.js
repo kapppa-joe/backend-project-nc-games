@@ -165,7 +165,7 @@ describe("POST /api/categories", () => {
   });
 });
 
-describe.only("GET /api/reviews", () => {
+describe("GET /api/reviews", () => {
   test("200: respond with an array of review objects", async () => {
     const res = await request(app).get("/api/reviews").expect(200);
 
