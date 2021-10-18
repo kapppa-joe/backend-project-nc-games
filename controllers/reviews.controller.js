@@ -27,8 +27,8 @@ exports.patchReviewById = (req, res, next) => {
 };
 
 exports.getReviews = (req, res, next) => {
-  const { sort_by, order, category, limit, p } = req.query;
-  selectReviews({ sort_by, order, category, limit, p })
+  const { sort_by, order, category, limit, p, search } = req.query;
+  selectReviews({ sort_by, order, category, limit, p, search })
     .then((result) => {
       const { reviews, total_count } = result;
       res.status(200).send({ reviews, total_count });

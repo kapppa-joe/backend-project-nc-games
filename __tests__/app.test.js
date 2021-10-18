@@ -165,7 +165,7 @@ describe("POST /api/categories", () => {
   });
 });
 
-describe("GET /api/reviews", () => {
+describe.only("GET /api/reviews", () => {
   test("200: respond with an array of review objects", async () => {
     const res = await request(app).get("/api/reviews").expect(200);
 
@@ -352,6 +352,37 @@ describe("GET /api/reviews", () => {
           });
         }
       }
+    });
+  });
+
+  describe("GET /api/reviews `search` query", () => {
+    test("200: respond with reviews which content matches search keywords", async () => {
+      const testSearchTerm = "build";
+      const res = await request(app)
+        .get(
+          `/api/reviews?search=${testSearchTerm}&sort_by=review_id&order=asc`
+        )
+        .expect(200);
+      expect(res.body.reviews).toHaveLength(2);
+      const { reviews } = res.body;
+      expect(reviews[0]).toMatchObject({
+        title: "Build you own tour de Yorkshire",
+      });
+      expect(reviews[1].review_body.includes("build")).toBe(true);
+    });
+
+    test("200: `search` and `category` can be handled together", async () => {
+      const testSearchTerm = "fun";
+      const testCategory = "euro game";
+      const res = await request(app)
+        .get(`/api/reviews?search=${testSearchTerm}&category=${testCategory}`)
+        .expect(200);
+      expect(res.body.reviews).toHaveLength(1);
+      expect(res.body.reviews[0]).toMatchObject({
+        title: "Agricola",
+        review_body: "Farmyard fun!",
+        category: testCategory,
+      });
     });
   });
 

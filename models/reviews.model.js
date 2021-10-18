@@ -142,6 +142,7 @@ exports.selectReviews = async ({
   sort_by = "created_at",
   order = "desc",
   category = undefined,
+  search = undefined,
   limit = 10,
   p = 1,
 }) => {
@@ -172,6 +173,7 @@ exports.selectReviews = async ({
         , reviews.review_img_url
         , reviews.created_at
         , reviews.votes
+        ${search ? ", reviews.review_body" : ""}
         , COUNT(comment_id) :: INT as comment_count
       FROM reviews LEFT OUTER JOIN comments
         ON reviews.review_id = comments.review_id
@@ -182,12 +184,28 @@ exports.selectReviews = async ({
     values: [limit, offset],
   };
 
-  if (category) {
+  if (category || search) {
+    const whereClauses = [];
+    if (category) {
+      whereClauses.push(` reviews.category = $${sqlQuery.values.length + 1} `);
+      sqlQuery.values.push(category);
+    }
+    if (search) {
+      const keywords = search.split(" ");
+      for (const keyword of keywords) {
+        whereClauses.push(
+          ` CONCAT(reviews.title, ' ', reviews.review_body,' ', reviews.category) ILIKE $${
+            sqlQuery.values.length + 1
+          } `
+        );
+        sqlQuery.values.push(`%${keyword}%`);
+      }
+    }
+
     sqlQuery.text = sqlQuery.text.replace(
       "GROUP BY",
-      `WHERE reviews.category = $${sqlQuery.values.length + 1} \n GROUP BY`
+      `WHERE ${whereClauses.join(" AND ")} \n GROUP BY`
     );
-    sqlQuery.values.push(category);
   }
 
   const result = await db.query(sqlQuery);
