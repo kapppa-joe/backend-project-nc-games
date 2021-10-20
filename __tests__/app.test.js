@@ -364,6 +364,7 @@ describe("GET /api/reviews", () => {
         )
         .expect(200);
       expect(res.body.reviews).toHaveLength(2);
+      expect(res.body.total_count).toBe(2);
       const { reviews } = res.body;
       expect(reviews[0]).toMatchObject({
         title: "Build you own tour de Yorkshire",
@@ -378,6 +379,7 @@ describe("GET /api/reviews", () => {
         .get(`/api/reviews?search=${testSearchTerm}&category=${testCategory}`)
         .expect(200);
       expect(res.body.reviews).toHaveLength(1);
+      expect(res.body.total_count).toBe(1);
       expect(res.body.reviews[0]).toMatchObject({
         title: "Agricola",
         review_body: "Farmyard fun!",

@@ -125,14 +125,19 @@ function validateLimitAndPage(limit, p) {
   }
 }
 
-async function getTotalCounts(category) {
+async function getTotalCounts(whereClauses, values) {
   const totalCountQuery = {
     text: `SELECT COUNT(review_id)::INT as total_count FROM reviews`,
   };
-  if (category) {
-    totalCountQuery.text += ` WHERE reviews.category = $1`;
-    totalCountQuery.values = [category];
+  const newWhereClause = whereClauses
+    .join(" AND ")
+    .replace(/(\$\d+)/g, (arg) => `$${parseInt(arg.slice(1)) - 2}`);
+
+  if (whereClauses.length > 0) {
+    totalCountQuery.text += ` WHERE ${newWhereClause} `;
+    totalCountQuery.values = values.slice(2);
   }
+  console.log(totalCountQuery, "<--- totalCountQuery");
 
   const result = await db.query(totalCountQuery);
   return result.rows[0].total_count;
@@ -184,8 +189,9 @@ exports.selectReviews = async ({
     values: [limit, offset],
   };
 
+  const whereClauses = [];
   if (category || search) {
-    const whereClauses = [];
+    // const whereClauses = [];
     if (category) {
       whereClauses.push(` reviews.category = $${sqlQuery.values.length + 1} `);
       sqlQuery.values.push(category);
@@ -209,7 +215,7 @@ exports.selectReviews = async ({
   }
 
   const result = await db.query(sqlQuery);
-  const total_count = await getTotalCounts(category);
+  const total_count = await getTotalCounts(whereClauses, sqlQuery.values);
 
   return { reviews: result.rows, total_count: total_count };
 };
