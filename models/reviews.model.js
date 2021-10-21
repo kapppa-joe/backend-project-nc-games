@@ -137,7 +137,7 @@ async function getTotalCounts(whereClauses, values) {
     totalCountQuery.text += ` WHERE ${newWhereClause} `;
     totalCountQuery.values = values.slice(2);
   }
-  console.log(totalCountQuery, "<--- totalCountQuery");
+  // console.log(totalCountQuery, "<--- totalCountQuery");
 
   const result = await db.query(totalCountQuery);
   return result.rows[0].total_count;

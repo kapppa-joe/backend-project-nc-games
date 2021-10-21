@@ -16,6 +16,7 @@ exports.selectCommentsByReviewId = async (review_id) => {
     text: `
       SELECT * FROM comments
       WHERE review_id = $1
+      ORDER BY created_at DESC
       `,
     values: [review_id],
   };
